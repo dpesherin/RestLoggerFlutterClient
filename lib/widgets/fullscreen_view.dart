@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:clipboard/clipboard.dart';
 import '../models/message.dart';
 import '../utils/json_helper.dart';
+import '../utils/theme.dart';
 
 class FullscreenView extends StatefulWidget {
   final Message message;
@@ -26,10 +27,16 @@ class _FullscreenViewState extends State<FullscreenView> {
       child: Container(
         width: screenSize.width * 0.9,
         height: screenSize.height * 0.9,
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1E24) : const Color(0xFFE0E5EC),
-          borderRadius: BorderRadius.circular(20),
-        ),
+        decoration: context.panelDecoration(radius: 24).copyWith(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  context.appPanel.withValues(alpha: 0.96),
+                  context.appPanelAlt.withValues(alpha: 0.88),
+                ],
+              ),
+            ),
         child: Column(
           children: [
             Container(
@@ -37,7 +44,7 @@ class _FullscreenViewState extends State<FullscreenView> {
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                    color: context.appBorder,
                   ),
                 ),
               ),
@@ -53,8 +60,8 @@ class _FullscreenViewState extends State<FullscreenView> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF5A8FEC).withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(20),
+                            color: AppTheme.accent.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(999),
                           ),
                           child: Text(
                             widget.message.moduleName,
@@ -69,9 +76,7 @@ class _FullscreenViewState extends State<FullscreenView> {
                         Text(
                           widget.message.formattedTime,
                           style: TextStyle(
-                            color: isDark
-                                ? Colors.grey[400]
-                                : const Color(0xFF4A5C6E),
+                            color: context.appTextMuted,
                             fontSize: 14,
                           ),
                         ),
@@ -82,8 +87,7 @@ class _FullscreenViewState extends State<FullscreenView> {
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.pop(context),
                     style: IconButton.styleFrom(
-                      backgroundColor:
-                          isDark ? const Color(0xFF2C313A) : Colors.white,
+                      backgroundColor: context.appPanelAlt,
                     ),
                   ),
                 ],
@@ -95,17 +99,17 @@ class _FullscreenViewState extends State<FullscreenView> {
                 margin: const EdgeInsets.all(16),
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF2D2D2D)),
+                  color: isDark ? const Color(0xFF09101D) : const Color(0xFFF8FBFF),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: context.appBorder),
                 ),
                 child: SingleChildScrollView(
                   child: SelectableText(
                     JsonHelper.formatContent(widget.message.displayContent),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'monospace',
                       fontSize: 14,
-                      color: Color(0xFFD4D4D4),
+                      color: context.appTextPrimary,
                       height: 1.6,
                     ),
                   ),
@@ -117,7 +121,7 @@ class _FullscreenViewState extends State<FullscreenView> {
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                    color: context.appBorder,
                   ),
                 ),
               ),
@@ -168,41 +172,19 @@ class _FullscreenViewState extends State<FullscreenView> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: BoxDecoration(
-          gradient: isPrimary
-              ? const LinearGradient(
-                  colors: [Color(0xFF5A8FEC), Color(0xFF4A7AD4)],
-                )
+                  gradient: isPrimary
+              ? context.appAccentGradient
               : null,
           color: isPrimary
               ? null
-              : (isDark ? const Color(0xFF2C313A) : Colors.white),
+              : context.appPanelAlt,
           borderRadius: BorderRadius.circular(30),
           border: Border.all(
             color: isPrimary
                 ? Colors.transparent
-                : (isDark ? Colors.grey[700]! : Colors.grey[300]!),
+                : context.appBorder,
           ),
-          boxShadow: isPrimary
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFF5A8FEC).withOpacity(0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color:
-                        isDark ? Colors.black26 : Colors.grey.withOpacity(0.3),
-                    blurRadius: 5,
-                    offset: const Offset(2, 2),
-                  ),
-                  BoxShadow(
-                    color: isDark ? const Color(0xFF3A404B) : Colors.white,
-                    blurRadius: 5,
-                    offset: const Offset(-2, -2),
-                  ),
-                ],
+          boxShadow: isPrimary ? context.appGlowShadow : context.appSoftShadow,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

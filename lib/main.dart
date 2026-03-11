@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:window_manager/window_manager.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
 import 'dart:io';
-import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'services/storage_service.dart';
@@ -76,10 +74,9 @@ Future<T?> showModalWithGuard<T>(
   final result = await showDialog<T>(
     context: context,
     barrierDismissible: barrierDismissible,
-    builder: (context) => WillPopScope(
-      onWillPop: () async {
+    builder: (context) => PopScope(
+      onPopInvokedWithResult: (_, __) {
         _isAnyModalOpen = false;
-        return true;
       },
       child: modal,
     ),
@@ -97,18 +94,8 @@ Future<void> _setupSecureContext() async {
     SecurityContext.defaultContext.setTrustedCertificatesBytes(certBytes);
     logger.info('✅ Сертификат Let\'s Encrypt загружен');
   } catch (e) {
-    logger.error('❌ Ошибка загрузки сертификата', e);
-    HttpOverrides.global = _NoCheckHttpOverrides();
-    logger.warning('⚠️ Включен режим без проверки сертификатов');
-  }
-}
-
-class _NoCheckHttpOverrides extends HttpOverrides {
-  @override
-  HttpClient createHttpClient(SecurityContext? context) {
-    return super.createHttpClient(context)
-      ..badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
+    logger.fatal('Не удалось загрузить корневой сертификат TLS', e);
+    rethrow;
   }
 }
 

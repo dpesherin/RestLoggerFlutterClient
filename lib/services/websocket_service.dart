@@ -1,5 +1,4 @@
-import 'package:socket_io_client/socket_io_client.dart' as IO;
-import 'package:flutter/foundation.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../models/message.dart';
 import 'storage_service.dart';
 import '../utils/error_handler.dart';
@@ -9,13 +8,11 @@ typedef MessageCallback = void Function(Message message);
 typedef ConnectionCallback = void Function(bool connected);
 
 class WebSocketService {
-  IO.Socket? _socket;
+  io.Socket? _socket;
   late MessageCallback _onMessage;
   ConnectionCallback? _onConnectionChange;
 
-  int _reconnectAttempts = 0;
   static const int maxReconnectAttempts = 5;
-  String? _consumerKey;
 
   bool get isConnected => _socket?.connected ?? false;
 
@@ -52,18 +49,15 @@ class WebSocketService {
           opts['query'] = {'token': token};
         }
 
-        return IO.io(AppConfig.wsUrl, opts);
+        return io.io(AppConfig.wsUrl, opts);
       });
 
       if (_socket == null) return;
 
       _socket!.on('connect', (_) {
         suppressErrors(() {
-          _reconnectAttempts = 0;
-
           _socket!.once('consumer', (key) {
             if (key != null) {
-              _consumerKey = key.toString();
               StorageService.saveConsumerKey(key.toString());
               _onConnectionChange?.call(true);
             }
@@ -88,9 +82,7 @@ class WebSocketService {
       });
 
       _socket!.on('connect_error', (error) {
-        suppressErrors(() {
-          _reconnectAttempts++;
-        });
+        suppressErrors(() {});
       });
 
       _socket!.connect();

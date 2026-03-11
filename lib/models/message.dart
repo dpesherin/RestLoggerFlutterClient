@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import '../utils/logger.dart';
 
 class Message {
   final String? id;
@@ -45,7 +45,10 @@ class Message {
     if (timestamp is String) {
       try {
         return DateTime.parse(timestamp).millisecondsSinceEpoch;
-      } catch (e) {}
+      } catch (e, stack) {
+        logger.warning('Не удалось распарсить timestamp "$timestamp": $e');
+        logger.debug(stack.toString());
+      }
     }
 
     return DateTime.now().millisecondsSinceEpoch;

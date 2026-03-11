@@ -12,29 +12,30 @@ class ThemeToggle extends StatelessWidget {
 
     return InkWell(
       onTap: themeProvider.toggleTheme,
+      borderRadius: BorderRadius.circular(999),
       child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1E24) : const Color(0xFFE0E5EC),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: isDark ? Colors.black54 : Colors.grey.withOpacity(0.5),
-              blurRadius: 6,
-              offset: const Offset(3, 3),
+        width: 46,
+        height: 46,
+        decoration: context.panelDecoration(radius: 999).copyWith(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  context.appPanel.withValues(alpha: 0.95),
+                  context.appPanelAlt.withValues(alpha: 0.86),
+                ],
+              ),
             ),
-            BoxShadow(
-              color: isDark ? const Color(0xFF2C313A) : Colors.white,
-              blurRadius: 6,
-              offset: const Offset(-3, -3),
-            ),
-          ],
-        ),
-        child: Icon(
-          isDark ? Icons.dark_mode : Icons.light_mode,
-          color: isDark ? Colors.white : const Color(0xFF2D4059),
-          size: 20,
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          transitionBuilder: (child, animation) =>
+              RotationTransition(turns: animation, child: child),
+          child: Icon(
+            isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+            key: ValueKey<bool>(isDark),
+            color: isDark ? Colors.white : const Color(0xFF2D4059),
+            size: 20,
+          ),
         ),
       ),
     );

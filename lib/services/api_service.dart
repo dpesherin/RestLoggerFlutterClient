@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart';
 import '../models/user.dart';
 import '../services/storage_service.dart';
 import '../utils/config.dart';
+import '../utils/logger.dart';
 
 class ApiService {
   static String get baseUrl => AppConfig.apiBaseUrl;
@@ -37,7 +37,10 @@ class ApiService {
         final Map<String, dynamic> payloadData = jsonDecode(payload);
         return payloadData['consumerKey'] as String?;
       }
-    } catch (e) {}
+    } catch (e, stack) {
+      logger.warning('Не удалось извлечь consumerKey из JWT: $e');
+      logger.debug(stack.toString());
+    }
     return null;
   }
 
@@ -201,7 +204,7 @@ class ApiService {
     try {
       await _request('/logout', method: 'POST');
     } finally {
-      await StorageService.clearAll();
+      await StorageService.clearAuthData();
     }
   }
 
@@ -209,26 +212,18 @@ class ApiService {
     try {
       await _request('/logout-all', method: 'POST');
     } finally {
-      await StorageService.clearAll();
+      await StorageService.clearAuthData();
     }
   }
 
   static Future<List<dynamic>> getSessions() async {
-    try {
-      final data = await _request('/sessions');
-      return data['sessions'] ?? [];
-    } catch (e) {
-      return [];
-    }
+    final data = await _request('/sessions');
+    return data['sessions'] ?? [];
   }
 
   static Future<bool> terminateSession(String sessionId) async {
-    try {
-      final data = await _request('/sessions/$sessionId', method: 'DELETE');
-      return data['status'] == 'ok';
-    } catch (e) {
-      return false;
-    }
+    final data = await _request('/sessions/$sessionId', method: 'DELETE');
+    return data['status'] == 'ok';
   }
 
   static Future<bool> checkAuth() async {

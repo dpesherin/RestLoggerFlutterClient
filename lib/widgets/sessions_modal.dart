@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../services/api_service.dart';
 import '../utils/theme.dart';
 import 'toast_widget.dart';
@@ -54,8 +53,9 @@ class _SessionsModalState extends State<SessionsModal> {
 
   String _getDeviceIcon(String? userAgent) {
     if (userAgent == null) return '💻';
-    if (userAgent.contains('iPhone') || userAgent.contains('Android'))
+    if (userAgent.contains('iPhone') || userAgent.contains('Android')) {
       return '📱';
+    }
     if (userAgent.contains('iPad')) return '📟';
     if (userAgent.contains('Mac')) return '🖥️';
     if (userAgent.contains('Windows')) return '🪟';
@@ -138,20 +138,24 @@ class _SessionsModalState extends State<SessionsModal> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDark = themeProvider.isDarkMode;
-
     return Dialog(
+      backgroundColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(30),
       ),
       child: Container(
         width: 600,
         constraints: const BoxConstraints(maxHeight: 500),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1E24) : const Color(0xFFE0E5EC),
-          borderRadius: BorderRadius.circular(30),
-        ),
+        decoration: context.panelDecoration(radius: 30).copyWith(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  context.appPanel.withValues(alpha: 0.96),
+                  context.appPanelAlt.withValues(alpha: 0.9),
+                ],
+              ),
+            ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -160,7 +164,7 @@ class _SessionsModalState extends State<SessionsModal> {
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                    color: context.appBorder,
                     width: 1,
                   ),
                 ),
@@ -170,9 +174,7 @@ class _SessionsModalState extends State<SessionsModal> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF5A8FEC), Color(0xFF4A7AD4)],
-                      ),
+                      gradient: context.appAccentGradient,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -182,7 +184,7 @@ class _SessionsModalState extends State<SessionsModal> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -190,15 +192,16 @@ class _SessionsModalState extends State<SessionsModal> {
                           'Активные сессии',
                           style: TextStyle(
                             fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w700,
+                            color: context.appTextPrimary,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           'Устройства, на которых выполнен вход',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey,
+                            color: context.appTextMuted,
                           ),
                         ),
                       ],
@@ -208,8 +211,7 @@ class _SessionsModalState extends State<SessionsModal> {
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.pop(context),
                     style: IconButton.styleFrom(
-                      backgroundColor:
-                          isDark ? const Color(0xFF2C313A) : Colors.white,
+                      backgroundColor: context.appPanelAlt,
                     ),
                   ),
                 ],
@@ -255,33 +257,15 @@ class _SessionsModalState extends State<SessionsModal> {
                             return Container(
                               margin: const EdgeInsets.only(bottom: 12),
                               padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? const Color(0xFF2C313A)
-                                    : Colors.white.withOpacity(0.5),
-                                borderRadius: BorderRadius.circular(20),
-                                border: isCurrent
-                                    ? Border.all(
-                                        color: const Color(0xFF5A8FEC),
-                                        width: 2,
-                                      )
-                                    : null,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: isDark
-                                        ? Colors.black26
-                                        : Colors.grey.withOpacity(0.2),
-                                    blurRadius: 8,
-                                    offset: const Offset(3, 3),
-                                  ),
-                                  BoxShadow(
-                                    color: isDark
-                                        ? const Color(0xFF3A404B)
-                                        : Colors.white,
-                                    blurRadius: 8,
-                                    offset: const Offset(-3, -3),
-                                  ),
-                                ],
+                              decoration:
+                                  context.panelDecoration(radius: 20).copyWith(
+                                color: context.appPanel.withValues(alpha: 0.78),
+                                border: Border.all(
+                                  color: isCurrent
+                                      ? AppTheme.accent.withValues(alpha: 0.65)
+                                      : context.appBorder,
+                                  width: isCurrent ? 1.6 : 1,
+                                ),
                               ),
                               child: Row(
                                 children: [
@@ -290,15 +274,10 @@ class _SessionsModalState extends State<SessionsModal> {
                                     height: 48,
                                     decoration: BoxDecoration(
                                       gradient: isCurrent
-                                          ? const LinearGradient(
-                                              colors: [
-                                                Color(0xFF5A8FEC),
-                                                Color(0xFF4A7AD4)
-                                              ],
-                                            )
+                                          ? context.appAccentGradient
                                           : null,
                                       color:
-                                          isCurrent ? null : Colors.grey[200],
+                                          isCurrent ? null : context.appPanelAlt,
                                       shape: BoxShape.circle,
                                     ),
                                     child: Center(
@@ -319,8 +298,9 @@ class _SessionsModalState extends State<SessionsModal> {
                                             Expanded(
                                               child: Text(
                                                 device,
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.w600,
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w700,
+                                                  color: context.appTextPrimary,
                                                 ),
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
@@ -339,14 +319,14 @@ class _SessionsModalState extends State<SessionsModal> {
                                                   borderRadius:
                                                       BorderRadius.circular(12),
                                                 ),
-                                                child: const Text(
-                                                  'Текущая',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 10,
-                                                    fontWeight: FontWeight.w600,
+                                                  child: const Text(
+                                                    'Текущая',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.w700,
+                                                    ),
                                                   ),
-                                                ),
                                               ),
                                           ],
                                         ),
@@ -355,7 +335,7 @@ class _SessionsModalState extends State<SessionsModal> {
                                           'IP: $ip',
                                           style: TextStyle(
                                             fontSize: 12,
-                                            color: Colors.grey[600],
+                                            color: context.appTextMuted,
                                           ),
                                         ),
                                         const SizedBox(height: 2),
@@ -363,7 +343,7 @@ class _SessionsModalState extends State<SessionsModal> {
                                           'Последняя активность: ${_formatDate(lastActive)}',
                                           style: TextStyle(
                                             fontSize: 12,
-                                            color: Colors.grey[600],
+                                            color: context.appTextMuted,
                                           ),
                                         ),
                                       ],
@@ -396,7 +376,7 @@ class _SessionsModalState extends State<SessionsModal> {
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                    color: context.appBorder,
                     width: 1,
                   ),
                 ),
@@ -412,16 +392,14 @@ class _SessionsModalState extends State<SessionsModal> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
-                        side: BorderSide(
-                          color: isDark ? Colors.white54 : Colors.grey,
-                          width: 1,
-                        ),
+                        side: BorderSide(color: context.appBorder, width: 1),
+                        backgroundColor: context.appPanelAlt,
                       ),
                       child: Text(
                         'Закрыть',
                         style: TextStyle(
-                          color: isDark ? Colors.white : Colors.grey[700],
-                          fontWeight: FontWeight.w600,
+                          color: context.appTextMuted,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),

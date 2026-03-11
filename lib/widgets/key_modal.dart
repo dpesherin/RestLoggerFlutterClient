@@ -23,15 +23,22 @@ class KeyModal extends StatelessWidget {
     final isDark = themeProvider.isDarkMode;
 
     return Dialog(
+      backgroundColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(30),
       ),
       child: Container(
         width: 600,
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1E24) : const Color(0xFFE0E5EC),
-          borderRadius: BorderRadius.circular(30),
-        ),
+        decoration: context.panelDecoration(radius: 30).copyWith(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  context.appPanel.withValues(alpha: 0.96),
+                  context.appPanelAlt.withValues(alpha: 0.9),
+                ],
+              ),
+            ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -40,7 +47,7 @@ class KeyModal extends StatelessWidget {
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                    color: context.appBorder,
                     width: 1,
                   ),
                 ),
@@ -50,9 +57,7 @@ class KeyModal extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF5A8FEC), Color(0xFF4A7AD4)],
-                      ),
+                      gradient: context.appAccentGradient,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -62,7 +67,7 @@ class KeyModal extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -70,15 +75,16 @@ class KeyModal extends StatelessWidget {
                           'Consumer Key',
                           style: TextStyle(
                             fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w700,
+                            color: context.appTextPrimary,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           'Ваш уникальный ключ для доступа к API',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey,
+                            color: context.appTextMuted,
                           ),
                         ),
                       ],
@@ -88,8 +94,7 @@ class KeyModal extends StatelessWidget {
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.pop(context),
                     style: IconButton.styleFrom(
-                      backgroundColor:
-                          isDark ? const Color(0xFF2C313A) : Colors.white,
+                      backgroundColor: context.appPanelAlt,
                     ),
                   ),
                 ],
@@ -102,13 +107,8 @@ class KeyModal extends StatelessWidget {
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF2C313A) : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: const Color(0xFF5A8FEC).withOpacity(0.3),
-                        width: 1,
-                      ),
+                    decoration: context.panelDecoration(radius: 22).copyWith(
+                      color: context.appPanel.withValues(alpha: 0.78),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,7 +118,7 @@ class KeyModal extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF5A8FEC).withOpacity(0.1),
+                                color: AppTheme.accent.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Icon(
@@ -128,12 +128,13 @@ class KeyModal extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 12),
-                            const Expanded(
+                            Expanded(
                               child: Text(
                                 'Ваш Consumer Key',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w700,
+                                  color: context.appTextPrimary,
                                 ),
                               ),
                             ),
@@ -144,9 +145,10 @@ class KeyModal extends StatelessWidget {
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: isDark
-                                ? const Color(0xFF1A1E24)
-                                : const Color(0xFFF5F5F5),
+                                ? const Color(0xFF09101D)
+                                : const Color(0xFFF8FBFF),
                             borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: context.appBorder),
                           ),
                           child: Row(
                             children: [
@@ -156,9 +158,7 @@ class KeyModal extends StatelessWidget {
                                   style: TextStyle(
                                     fontFamily: 'monospace',
                                     fontSize: 14,
-                                    color: isDark
-                                        ? Colors.white
-                                        : const Color(0xFF2D4059),
+                                    color: context.appTextPrimary,
                                   ),
                                 ),
                               ),
@@ -182,8 +182,9 @@ class KeyModal extends StatelessWidget {
                                   child: Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF5A8FEC)
-                                          .withOpacity(0.1),
+                                      color: AppTheme.accent.withValues(
+                                        alpha: 0.12,
+                                      ),
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: const Icon(
@@ -208,7 +209,7 @@ class KeyModal extends StatelessWidget {
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                    color: context.appBorder,
                     width: 1,
                   ),
                 ),
@@ -229,6 +230,8 @@ class KeyModal extends StatelessWidget {
                               color: Color(0xFF5A8FEC),
                               width: 1.5,
                             ),
+                            backgroundColor:
+                                AppTheme.accent.withValues(alpha: 0.05),
                           ),
                           child: const Text(
                             'Активные сессии',
@@ -252,8 +255,7 @@ class KeyModal extends StatelessWidget {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
-                            backgroundColor:
-                                isDark ? const Color(0xFF2C313A) : Colors.white,
+                            backgroundColor: context.appPanelAlt,
                           ),
                           child: const Text(
                             'Закрыть',

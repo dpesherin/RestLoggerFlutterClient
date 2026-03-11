@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
+import '../utils/logger.dart';
 
 class StorageService {
   static const String _userKey = 'user';
@@ -20,7 +21,10 @@ class StorageService {
     try {
       final userJson = json.encode(user.toJson());
       await _prefs.setString(_userKey, userJson);
-    } catch (e) {}
+    } catch (e, stack) {
+      logger.warning('Не удалось сохранить пользователя: $e');
+      logger.debug(stack.toString());
+    }
   }
 
   static Future<User?> getUser() async {
@@ -30,7 +34,10 @@ class StorageService {
         final Map<String, dynamic> userMap = json.decode(userJson);
         return User.fromJson(userMap);
       }
-    } catch (e) {}
+    } catch (e, stack) {
+      logger.warning('Не удалось прочитать пользователя: $e');
+      logger.debug(stack.toString());
+    }
     return null;
   }
 
@@ -41,7 +48,10 @@ class StorageService {
       } else {
         await _prefs.remove(_tokenKey);
       }
-    } catch (e) {}
+    } catch (e, stack) {
+      logger.warning('Не удалось сохранить токен: $e');
+      logger.debug(stack.toString());
+    }
   }
 
   static Future<String?> getToken() async {
@@ -49,6 +59,7 @@ class StorageService {
       final token = _prefs.getString(_tokenKey);
       return token;
     } catch (e) {
+      logger.warning('Не удалось прочитать токен: $e');
       return null;
     }
   }
@@ -60,7 +71,10 @@ class StorageService {
       } else {
         await _prefs.remove(_consumerKey);
       }
-    } catch (e) {}
+    } catch (e, stack) {
+      logger.warning('Не удалось сохранить consumer key: $e');
+      logger.debug(stack.toString());
+    }
   }
 
   static Future<String?> getConsumerKey() async {
@@ -68,6 +82,7 @@ class StorageService {
       final key = _prefs.getString(_consumerKey);
       return key;
     } catch (e) {
+      logger.warning('Не удалось прочитать consumer key: $e');
       return null;
     }
   }
@@ -79,7 +94,10 @@ class StorageService {
       } else {
         await _prefs.remove(_sessionIdKey);
       }
-    } catch (e) {}
+    } catch (e, stack) {
+      logger.warning('Не удалось сохранить session id: $e');
+      logger.debug(stack.toString());
+    }
   }
 
   static Future<String?> getSessionId() async {
@@ -87,6 +105,7 @@ class StorageService {
       final sessionId = _prefs.getString(_sessionIdKey);
       return sessionId;
     } catch (e) {
+      logger.warning('Не удалось прочитать session id: $e');
       return null;
     }
   }
@@ -95,7 +114,10 @@ class StorageService {
     try {
       final String value = mode.toString().split('.').last;
       await _prefs.setString(_themeKey, value);
-    } catch (e) {}
+    } catch (e, stack) {
+      logger.warning('Не удалось сохранить тему: $e');
+      logger.debug(stack.toString());
+    }
   }
 
   static Future<ThemeMode?> getThemeMode() async {
@@ -111,13 +133,33 @@ class StorageService {
             return ThemeMode.system;
         }
       }
-    } catch (e) {}
+    } catch (e, stack) {
+      logger.warning('Не удалось прочитать тему: $e');
+      logger.debug(stack.toString());
+    }
     return null;
+  }
+
+  static Future<void> clearAuthData() async {
+    try {
+      await Future.wait([
+        _prefs.remove(_userKey),
+        _prefs.remove(_tokenKey),
+        _prefs.remove(_consumerKey),
+        _prefs.remove(_sessionIdKey),
+      ]);
+    } catch (e, stack) {
+      logger.warning('Не удалось очистить auth-данные: $e');
+      logger.debug(stack.toString());
+    }
   }
 
   static Future<void> clearAll() async {
     try {
       await _prefs.clear();
-    } catch (e) {}
+    } catch (e, stack) {
+      logger.warning('Не удалось очистить хранилище: $e');
+      logger.debug(stack.toString());
+    }
   }
 }

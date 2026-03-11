@@ -77,25 +77,22 @@ class _MessageCardState extends State<MessageCard>
       child: Container(
         margin: const EdgeInsets.only(bottom: 20, left: 16, right: 16),
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1E24) : const Color(0xFFE0E5EC),
-          borderRadius: BorderRadius.circular(24),
-          border: widget.message.isPinned
-              ? Border.all(color: const Color(0xFF5A8FEC), width: 2)
-              : null,
-          boxShadow: [
-            BoxShadow(
-              color: isDark ? Colors.black54 : Colors.grey.withOpacity(0.5),
-              blurRadius: 10,
-              offset: const Offset(5, 5),
+        decoration: context.panelDecoration(radius: 26).copyWith(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  context.appPanel.withValues(alpha: 0.96),
+                  context.appPanelAlt.withValues(alpha: 0.84),
+                ],
+              ),
+              border: Border.all(
+                color: widget.message.isPinned
+                    ? AppTheme.accent.withValues(alpha: 0.6)
+                    : context.appBorder.withValues(alpha: 0.8),
+                width: widget.message.isPinned ? 1.6 : 1,
+              ),
             ),
-            BoxShadow(
-              color: isDark ? const Color(0xFF2C313A) : Colors.white,
-              blurRadius: 10,
-              offset: const Offset(-5, -5),
-            ),
-          ],
-        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -104,9 +101,9 @@ class _MessageCardState extends State<MessageCard>
                 Text(
                   widget.message.formattedTime,
                   style: TextStyle(
-                    color: isDark ? Colors.grey[400] : const Color(0xFF4A5C6E),
+                    color: context.appTextMuted,
                     fontSize: 13,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const Spacer(),
@@ -116,10 +113,10 @@ class _MessageCardState extends State<MessageCard>
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF5A8FEC).withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(30),
+                    color: AppTheme.accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(999),
                     border: Border.all(
-                      color: const Color(0xFF5A8FEC).withOpacity(0.3),
+                      color: AppTheme.accent.withValues(alpha: 0.24),
                       width: 1,
                     ),
                   ),
@@ -140,9 +137,13 @@ class _MessageCardState extends State<MessageCard>
               width: double.infinity,
               constraints: const BoxConstraints(minHeight: 80),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E1E1E),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF2D2D2D)),
+                color: isDark ? const Color(0xFF09101D) : const Color(0xFFF8FBFF),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isDark
+                      ? const Color(0xFF1D2C45)
+                      : const Color(0xFFD7E6F8),
+                ),
               ),
               child: Stack(
                 children: [
@@ -199,10 +200,10 @@ class _MessageCardState extends State<MessageCard>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF5A8FEC).withOpacity(0.1),
+                    color: AppTheme.accent.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: const Color(0xFF5A8FEC).withOpacity(0.3),
+                      color: AppTheme.accent.withValues(alpha: 0.24),
                       width: 1,
                     ),
                   ),
@@ -212,7 +213,7 @@ class _MessageCardState extends State<MessageCard>
                       Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF5A8FEC).withOpacity(0.2),
+                          color: AppTheme.accent.withValues(alpha: 0.16),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
@@ -248,10 +249,12 @@ class _MessageCardState extends State<MessageCard>
     if (query.isEmpty) {
       return SelectableText(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'monospace',
           fontSize: 14,
-          color: Color(0xFFD4D4D4),
+          color: context.isDarkMode
+              ? const Color(0xFFDCE7F8)
+              : const Color(0xFF21324B),
           height: 1.5,
         ),
       );
@@ -266,10 +269,12 @@ class _MessageCardState extends State<MessageCard>
       if (searchIndex > lastIndex) {
         spans.add(TextSpan(
           text: text.substring(lastIndex, searchIndex),
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'monospace',
             fontSize: 14,
-            color: Color(0xFFD4D4D4),
+            color: context.isDarkMode
+                ? const Color(0xFFDCE7F8)
+                : const Color(0xFF21324B),
             height: 1.5,
           ),
         ));
@@ -279,10 +284,10 @@ class _MessageCardState extends State<MessageCard>
         style: TextStyle(
           fontFamily: 'monospace',
           fontSize: 14,
-          color: Colors.black87,
+          color: const Color(0xFF09101D),
           backgroundColor: widget.isCurrentMatch
-              ? Colors.yellow[500]?.withOpacity(1.0)
-              : Colors.yellow[700]?.withOpacity(0.4),
+              ? const Color(0xFFFFD84D)
+              : const Color(0xFFFFE892),
           height: 1.5,
           fontWeight:
               widget.isCurrentMatch ? FontWeight.bold : FontWeight.normal,
@@ -295,10 +300,12 @@ class _MessageCardState extends State<MessageCard>
     if (lastIndex < text.length) {
       spans.add(TextSpan(
         text: text.substring(lastIndex),
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'monospace',
           fontSize: 14,
-          color: Color(0xFFD4D4D4),
+          color: context.isDarkMode
+              ? const Color(0xFFDCE7F8)
+              : const Color(0xFF21324B),
           height: 1.5,
         ),
       ));
@@ -323,30 +330,9 @@ class _MessageCardState extends State<MessageCard>
         child: Container(
           width: 36,
           height: 36,
-          decoration: BoxDecoration(
-            color: Provider.of<ThemeProvider>(context, listen: false).isDarkMode
-                ? const Color(0xFF1A1E24)
-                : const Color(0xFFE0E5EC),
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Provider.of<ThemeProvider>(context, listen: false)
-                        .isDarkMode
-                    ? Colors.black54
-                    : Colors.grey.withOpacity(0.5),
-                blurRadius: 4,
-                offset: const Offset(2, 2),
+          decoration: context.panelDecoration(radius: 999).copyWith(
+                color: context.appPanel.withValues(alpha: 0.92),
               ),
-              BoxShadow(
-                color: Provider.of<ThemeProvider>(context, listen: false)
-                        .isDarkMode
-                    ? const Color(0xFF2C313A)
-                    : Colors.white,
-                blurRadius: 4,
-                offset: const Offset(-2, -2),
-              ),
-            ],
-          ),
           child: Icon(
             icon,
             size: 18,

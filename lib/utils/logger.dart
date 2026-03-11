@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
 enum LogLevel {
@@ -25,8 +23,8 @@ class FileLogger {
   bool _initialized = false;
   LogLevel _minLevel = LogLevel.debug;
 
-  static const String LOG_FILE_NAME = 'logonline_log.txt';
-  static const int MAX_LOG_SIZE = 5 * 1024 * 1024;
+  static const String logFileName = 'logonline_log.txt';
+  static const int maxLogSize = 5 * 1024 * 1024;
 
   Future<void> init({LogLevel minLevel = LogLevel.debug}) async {
     if (_initialized) return;
@@ -51,11 +49,11 @@ class FileLogger {
         await logsDir.create(recursive: true);
       }
 
-      _logFile = File('${logsDir.path}\\$LOG_FILE_NAME');
+      _logFile = File('${logsDir.path}${Platform.pathSeparator}$logFileName');
 
       if (await _logFile!.exists()) {
         final size = await _logFile!.length();
-        if (size > MAX_LOG_SIZE) {
+        if (size > maxLogSize) {
           await _rotateLog();
         }
       }
@@ -189,7 +187,7 @@ class FileLogger {
         await logDir.create(recursive: true);
       }
 
-      final logFile = File('${logDir.path}\\$LOG_FILE_NAME');
+      final logFile = File('${logDir.path}${Platform.pathSeparator}$logFileName');
       return logFile.path;
     } catch (e) {
       return null;

@@ -1,18 +1,17 @@
-import 'package:socket_io_client/socket_io_client.dart' as IO;
-import 'package:flutter/foundation.dart';
+import 'package:socket_io_client/socket_io_client.dart' as socket_io;
 
 class SafeSocket {
-  final IO.Socket _socket;
+  final socket_io.Socket _socket;
 
   SafeSocket._internal(this._socket);
 
   static SafeSocket io(String uri, [Map<String, dynamic>? opts]) {
     try {
-      final socket = IO.io(uri, opts);
+      final socket = socket_io.io(uri, opts);
       return SafeSocket._internal(socket);
     } catch (e) {
       if (e.toString().contains('RangeError')) {
-        final socket = IO.io(uri, opts);
+        final socket = socket_io.io(uri, opts);
         return SafeSocket._internal(socket);
       }
       rethrow;

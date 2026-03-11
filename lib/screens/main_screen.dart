@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:clipboard/clipboard.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/message.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
@@ -16,8 +17,6 @@ import '../widgets/key_modal.dart';
 import '../widgets/sessions_modal.dart';
 import '../widgets/toast_widget.dart';
 import 'login_screen.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../providers/session_provider.dart';
 
 class _OpenSearchIntent extends Intent {
   const _OpenSearchIntent();
@@ -56,10 +55,9 @@ Future<T?> showModalWithGuard<T>(
     final result = await showDialog<T>(
       context: context,
       barrierDismissible: barrierDismissible,
-      builder: (context) => WillPopScope(
-        onWillPop: () async {
+      builder: (context) => PopScope(
+        onPopInvokedWithResult: (_, __) {
           _modalOpenState[modalType] = false;
-          return true;
         },
         child: modal,
       ),
@@ -109,8 +107,8 @@ class _MainScreenState extends State<MainScreen> {
   bool _showFAB = false;
   bool _searchPanelOpen = false;
   int _currentMatchIndex = -1;
-  List<Message> _matchedMessages = [];
-  Map<int, int> _messageMatchCount = {};
+  final List<Message> _matchedMessages = [];
+  final Map<int, int> _messageMatchCount = {};
   late _AppLifecycleObserver _lifecycleObserver;
   Timer? _searchDebounce;
   Timer? _findDebounce;
@@ -211,8 +209,9 @@ class _MainScreenState extends State<MainScreen> {
   void _togglePin(Message message) {
     setState(() {
       message.isPinned = !message.isPinned;
-      if (message.isPinned)
+      if (message.isPinned) {
         message.pinnedAt = DateTime.now().millisecondsSinceEpoch;
+      }
     });
 
     ToastWidget.show(
@@ -359,9 +358,15 @@ class _MainScreenState extends State<MainScreen> {
     }
 
     FlutterClipboard.copy(buffer.toString()).then((_) {
+      if (!mounted) {
+        return;
+      }
       ToastWidget.show(context,
           message: 'Все сообщения скопированы', type: ToastType.success);
     }).catchError((_) {
+      if (!mounted) {
+        return;
+      }
       ToastWidget.show(context,
           message: 'Ошибка копирования', type: ToastType.error);
     });
@@ -405,10 +410,16 @@ class _MainScreenState extends State<MainScreen> {
       if (await canLaunchUrl(url)) {
         await launchUrl(url, mode: LaunchMode.externalApplication);
       } else {
+        if (!mounted) {
+          return;
+        }
         ToastWidget.show(context,
             message: 'Не удалось открыть браузер', type: ToastType.error);
       }
     } catch (_) {
+      if (!mounted) {
+        return;
+      }
       ToastWidget.show(context,
           message: 'Ошибка при открытии браузера', type: ToastType.error);
     }
@@ -558,11 +569,15 @@ class _MainScreenState extends State<MainScreen> {
       if (success && mounted) {
         ToastWidget.show(context,
             message: 'Сессия завершена', type: ToastType.success);
+      } else if (mounted) {
+        ToastWidget.show(context,
+            message: 'Не удалось завершить сессию', type: ToastType.error);
       }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         ToastWidget.show(context,
             message: 'Ошибка при завершении сессии', type: ToastType.error);
+      }
     }
   }
 
@@ -674,8 +689,19 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
-    final pinnedMessages = _pinnedMessages;
     final messageWidgets = _buildMessageList();
+
+    if (_isLoading) {
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(
+              isDark ? Colors.white : const Color(0xFF5A8FEC),
+            ),
+          ),
+        ),
+      );
+    }
 
     return _buildScaffold(isDark, messageWidgets);
   }
@@ -726,11 +752,26 @@ class _MainScreenState extends State<MainScreen> {
   Widget _buildMainContent(bool isDark, List<Widget> messageWidgets) {
     return Stack(
       children: [
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  context.appBackground,
+                  context.appPanelAlt.withValues(alpha: 0.45),
+                  context.appBackground,
+                ],
+              ),
+            ),
+          ),
+        ),
         Scaffold(
-          body: Container(
+          backgroundColor: Colors.transparent,
+          body: SizedBox(
             width: double.infinity,
             height: double.infinity,
-            color: isDark ? const Color(0xFF1A1E24) : const Color(0xFFE0E5EC),
             child: Column(
               children: [
                 SafeArea(
@@ -739,36 +780,18 @@ class _MainScreenState extends State<MainScreen> {
                     margin: const EdgeInsets.all(16),
                     padding: const EdgeInsets.symmetric(
                         horizontal: 24, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF1A1E24)
-                          : const Color(0xFFE0E5EC),
-                      borderRadius: BorderRadius.circular(50),
-                      boxShadow: [
-                        BoxShadow(
-                          color: isDark
-                              ? Colors.black54
-                              : Colors.grey.withOpacity(0.5),
-                          blurRadius: 10,
-                          offset: const Offset(5, 5),
+                    decoration: context.panelDecoration(radius: 28).copyWith(
+                          color: context.appPanel.withValues(alpha: 0.82),
                         ),
-                        BoxShadow(
-                          color:
-                              isDark ? const Color(0xFF2C313A) : Colors.white,
-                          blurRadius: 10,
-                          offset: const Offset(-5, -5),
-                        ),
-                      ],
-                    ),
                     child: Row(
                       children: [
-                        const Text(
+                        Text(
                           '{..Logger..}',
                           style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 2,
-                            color: Color(0xFF5A8FEC),
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.2,
+                            color: context.appTextPrimary,
                           ),
                         ),
                         const Spacer(),
@@ -776,11 +799,11 @@ class _MainScreenState extends State<MainScreen> {
                           children: [
                             TextButton(
                               onPressed: () {},
-                              child: Text(
+                              child: const Text(
                                 'Главная',
                                 style: TextStyle(
-                                  color: const Color(0xFF5A8FEC),
-                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF5A8FEC),
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),
@@ -790,9 +813,8 @@ class _MainScreenState extends State<MainScreen> {
                               child: Text(
                                 'Документация',
                                 style: TextStyle(
-                                  color: isDark
-                                      ? Colors.white
-                                      : const Color(0xFF2D4059),
+                                  color: context.appTextMuted,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
@@ -807,8 +829,12 @@ class _MainScreenState extends State<MainScreen> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF5A8FEC).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(30),
+                                color: AppTheme.accent.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                  color:
+                                      AppTheme.accent.withValues(alpha: 0.22),
+                                ),
                               ),
                               child: Row(
                                 children: [
@@ -818,8 +844,9 @@ class _MainScreenState extends State<MainScreen> {
                                   Text(
                                     _username!,
                                     style: const TextStyle(
-                                        color: Color(0xFF5A8FEC),
-                                        fontWeight: FontWeight.w500),
+                                      color: AppTheme.accent,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                   const SizedBox(width: 8),
                                   Container(
@@ -833,10 +860,12 @@ class _MainScreenState extends State<MainScreen> {
                                       boxShadow: [
                                         BoxShadow(
                                           color: _isConnected
-                                              ? Colors.green.withOpacity(0.5)
-                                              : Colors.red.withOpacity(0.5),
-                                          blurRadius: 4,
-                                          spreadRadius: 1,
+                                              ? Colors.green.withValues(
+                                                  alpha: 0.4)
+                                              : Colors.red.withValues(
+                                                  alpha: 0.4),
+                                          blurRadius: 10,
+                                          spreadRadius: 2,
                                         ),
                                       ],
                                     ),
@@ -858,58 +887,27 @@ class _MainScreenState extends State<MainScreen> {
                     children: [
                       Expanded(
                         child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(30),
-                            boxShadow: [
-                              BoxShadow(
-                                color: isDark
-                                    ? Colors.black54
-                                    : Colors.grey.withOpacity(0.5),
-                                blurRadius: 6,
-                                offset: const Offset(3, 3),
-                              ),
-                              BoxShadow(
-                                color: isDark
-                                    ? const Color(0xFF2C313A)
-                                    : Colors.white,
-                                blurRadius: 6,
-                                offset: const Offset(-3, -3),
-                              ),
-                            ],
-                          ),
+                          decoration: context.panelDecoration(radius: 24)
+                              .copyWith(color: context.appPanel.withValues(alpha: 0.78)),
                           child: TextField(
                             controller: _searchController,
-                            style: TextStyle(
-                                color: isDark
-                                    ? Colors.white
-                                    : const Color(0xFF2D4059)),
+                            style: TextStyle(color: context.appTextPrimary),
                             decoration: InputDecoration(
                               hintText: 'Поиск по модулю...',
-                              hintStyle: TextStyle(
-                                color: isDark
-                                    ? Colors.grey[400]
-                                    : const Color(0xFF4A5C6E).withOpacity(0.7),
-                              ),
                               prefixIcon: const Icon(Icons.search,
-                                  color: Color(0xFF5A8FEC), size: 20),
+                                  color: AppTheme.accent, size: 20),
                               suffixIcon: _searchController.text.isNotEmpty
                                   ? IconButton(
                                       icon: const Icon(Icons.clear,
-                                          color: Color(0xFF5A8FEC), size: 18),
+                                          color: AppTheme.accent, size: 18),
                                       onPressed: () {
                                         _searchController.clear();
                                         setState(() {});
                                       },
                                     )
                                   : null,
-                              filled: true,
-                              fillColor: isDark
-                                  ? const Color(0xFF1A1E24)
-                                  : const Color(0xFFE0E5EC),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(30),
-                                borderSide: BorderSide.none,
-                              ),
+                              fillColor: Colors.transparent,
+                              border: InputBorder.none,
                               contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 20, vertical: 12),
                             ),
@@ -917,68 +915,16 @@ class _MainScreenState extends State<MainScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      InkWell(
+                      _buildToolbarAction(
+                        icon: Icons.copy_all_rounded,
+                        color: AppTheme.accent,
                         onTap: _copyAllMessages,
-                        borderRadius: BorderRadius.circular(30),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF1A1E24)
-                                : const Color(0xFFE0E5EC),
-                            borderRadius: BorderRadius.circular(30),
-                            boxShadow: [
-                              BoxShadow(
-                                color: isDark
-                                    ? Colors.black54
-                                    : Colors.grey.withOpacity(0.5),
-                                blurRadius: 5,
-                                offset: const Offset(3, 3),
-                              ),
-                              BoxShadow(
-                                color: isDark
-                                    ? const Color(0xFF2C313A)
-                                    : Colors.white,
-                                blurRadius: 5,
-                                offset: const Offset(-3, -3),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(Icons.copy_all,
-                              color: Color(0xFF5A8FEC), size: 20),
-                        ),
                       ),
                       const SizedBox(width: 8),
-                      InkWell(
+                      _buildToolbarAction(
+                        icon: Icons.delete_outline_rounded,
+                        color: const Color(0xFFFF6B6B),
                         onTap: _clearAllMessages,
-                        borderRadius: BorderRadius.circular(30),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF1A1E24)
-                                : const Color(0xFFE0E5EC),
-                            borderRadius: BorderRadius.circular(30),
-                            boxShadow: [
-                              BoxShadow(
-                                color: isDark
-                                    ? Colors.black54
-                                    : Colors.grey.withOpacity(0.5),
-                                blurRadius: 5,
-                                offset: const Offset(3, 3),
-                              ),
-                              BoxShadow(
-                                color: isDark
-                                    ? const Color(0xFF2C313A)
-                                    : Colors.white,
-                                blurRadius: 5,
-                                offset: const Offset(-3, -3),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(Icons.delete_outline,
-                              color: Color(0xFFFF6B6B), size: 20),
-                        ),
                       ),
                     ],
                   ),
@@ -991,23 +937,18 @@ class _MainScreenState extends State<MainScreen> {
                             children: [
                               Icon(Icons.inbox,
                                   size: 64,
-                                  color: isDark
-                                      ? Colors.grey[600]
-                                      : Colors.grey[400]),
+                                  color: context.appTextMuted),
                               const SizedBox(height: 16),
                               Text('Нет сообщений',
                                   style: TextStyle(
                                       fontSize: 18,
-                                      color: isDark
-                                          ? Colors.grey[400]
-                                          : Colors.grey[600])),
+                                      fontWeight: FontWeight.w600,
+                                      color: context.appTextPrimary)),
                               const SizedBox(height: 8),
                               Text('Ожидание сообщений от сервера...',
                                   style: TextStyle(
                                       fontSize: 14,
-                                      color: isDark
-                                          ? Colors.grey[500]
-                                          : Colors.grey[500])),
+                                      color: context.appTextMuted)),
                             ],
                           ),
                         )
@@ -1033,11 +974,8 @@ class _MainScreenState extends State<MainScreen> {
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeOut,
                   ),
-                  backgroundColor: isDark
-                      ? const Color(0xFF1A1E24)
-                      : const Color(0xFFE0E5EC),
-                  child:
-                      const Icon(Icons.arrow_upward, color: Color(0xFF5A8FEC)),
+                  backgroundColor: context.appPanel,
+                  child: const Icon(Icons.arrow_upward, color: AppTheme.accent),
                 )
               : null,
         ),
@@ -1055,22 +993,9 @@ class _MainScreenState extends State<MainScreen> {
           color: Colors.transparent,
           child: Container(
             width: 350,
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1A1E24) : const Color(0xFFE0E5EC),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: isDark ? Colors.black54 : Colors.grey.withOpacity(0.5),
-                  blurRadius: 10,
-                  offset: const Offset(3, 3),
+            decoration: context.panelDecoration(radius: 20).copyWith(
+                  color: context.appPanel.withValues(alpha: 0.94),
                 ),
-                BoxShadow(
-                  color: isDark ? const Color(0xFF2C313A) : Colors.white,
-                  blurRadius: 10,
-                  offset: const Offset(-3, -3),
-                ),
-              ],
-            ),
             padding: const EdgeInsets.all(12),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1081,9 +1006,9 @@ class _MainScreenState extends State<MainScreen> {
                       'ПОИСК',
                       style: TextStyle(
                         fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.grey[400] : Colors.grey[600],
-                        letterSpacing: 1,
+                        fontWeight: FontWeight.w700,
+                        color: context.appTextMuted,
+                        letterSpacing: 1.1,
                       ),
                     ),
                     const Spacer(),
@@ -1092,7 +1017,7 @@ class _MainScreenState extends State<MainScreen> {
                       onPressed: _closeSearchPanel,
                       constraints: const BoxConstraints(),
                       padding: EdgeInsets.zero,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      color: context.appTextMuted,
                     ),
                   ],
                 ),
@@ -1101,23 +1026,14 @@ class _MainScreenState extends State<MainScreen> {
                   focusNode: _findFocusNode,
                   controller: _findController,
                   style: TextStyle(
-                    color: isDark ? Colors.white : const Color(0xFF2D4059),
+                    color: context.appTextPrimary,
                     fontSize: 13,
                   ),
                   decoration: InputDecoration(
                     hintText: 'Введите текст...',
-                    hintStyle: TextStyle(
-                      color: isDark
-                          ? Colors.grey[500]
-                          : const Color(0xFF4A5C6E).withOpacity(0.5),
-                      fontSize: 13,
-                    ),
-                    filled: true,
-                    fillColor: isDark
-                        ? const Color(0xFF2C313A)
-                        : const Color(0xFFF5F7FA),
+                    fillColor: context.appPanelAlt,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 10),
@@ -1139,8 +1055,8 @@ class _MainScreenState extends State<MainScreen> {
                             fontSize: 11,
                             color: _matchedMessages.isEmpty
                                 ? Colors.red
-                                : const Color(0xFF5A8FEC),
-                            fontWeight: FontWeight.w500,
+                                : AppTheme.accent,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -1158,7 +1074,7 @@ class _MainScreenState extends State<MainScreen> {
                               constraints: const BoxConstraints(),
                               padding: EdgeInsets.zero,
                               iconSize: 16,
-                              color: const Color(0xFF5A8FEC),
+                              color: AppTheme.accent,
                               disabledColor: Colors.grey[600],
                             ),
                           ),
@@ -1174,7 +1090,7 @@ class _MainScreenState extends State<MainScreen> {
                               constraints: const BoxConstraints(),
                               padding: EdgeInsets.zero,
                               iconSize: 16,
-                              color: const Color(0xFF5A8FEC),
+                              color: AppTheme.accent,
                               disabledColor: Colors.grey[600],
                             ),
                           ),
@@ -1193,5 +1109,22 @@ class _MainScreenState extends State<MainScreen> {
   Widget _buildMessageWithHighlight(
       Widget messageWidget, int index, bool isDark) {
     return messageWidget;
+  }
+
+  Widget _buildToolbarAction({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(22),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: context.panelDecoration(radius: 22)
+            .copyWith(color: context.appPanel.withValues(alpha: 0.82)),
+        child: Icon(icon, color: color, size: 20),
+      ),
+    );
   }
 }
