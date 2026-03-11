@@ -1,0 +1,359 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:clipboard/clipboard.dart';
+import '../models/message.dart';
+import '../utils/theme.dart';
+import '../utils/json_helper.dart';
+import 'fullscreen_view.dart';
+
+class MessageCard extends StatefulWidget {
+  final Message message;
+  final VoidCallback onPinToggle;
+  final String? highlightText;
+  final bool isCurrentMatch;
+
+  const MessageCard({
+    super.key,
+    required this.message,
+    required this.onPinToggle,
+    this.highlightText,
+    this.isCurrentMatch = false,
+  });
+
+  @override
+  State<MessageCard> createState() => _MessageCardState();
+}
+
+class _MessageCardState extends State<MessageCard>
+    with SingleTickerProviderStateMixin {
+  bool _isHovered = false;
+  bool _showCopied = false;
+  late AnimationController _animationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _copyContent() async {
+    await FlutterClipboard.copy(widget.message.displayContent);
+
+    setState(() => _showCopied = true);
+    _animationController.forward().then((_) {
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) {
+          setState(() => _showCopied = false);
+          _animationController.reverse();
+        }
+      });
+    });
+  }
+
+  void _showFullscreen() {
+    showDialog(
+      context: context,
+      builder: (context) => FullscreenView(message: widget.message),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 20, left: 16, right: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1A1E24) : const Color(0xFFE0E5EC),
+          borderRadius: BorderRadius.circular(24),
+          border: widget.message.isPinned
+              ? Border.all(color: const Color(0xFF5A8FEC), width: 2)
+              : null,
+          boxShadow: [
+            BoxShadow(
+              color: isDark ? Colors.black54 : Colors.grey.withOpacity(0.5),
+              blurRadius: 10,
+              offset: const Offset(5, 5),
+            ),
+            BoxShadow(
+              color: isDark ? const Color(0xFF2C313A) : Colors.white,
+              blurRadius: 10,
+              offset: const Offset(-5, -5),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  widget.message.formattedTime,
+                  style: TextStyle(
+                    color: isDark ? Colors.grey[400] : const Color(0xFF4A5C6E),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF5A8FEC).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: const Color(0xFF5A8FEC).withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    widget.message.moduleName,
+                    style: const TextStyle(
+                      color: Color(0xFF5A8FEC),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              constraints: const BoxConstraints(minHeight: 80),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E1E),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF2D2D2D)),
+              ),
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: _buildHighlightedContent(),
+                  ),
+                  if (_isHovered)
+                    Positioned(
+                      bottom: 12,
+                      right: 12,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildControlButton(
+                            icon: widget.message.isPinned
+                                ? Icons.push_pin
+                                : Icons.push_pin_outlined,
+                            color: widget.message.isPinned
+                                ? const Color(0xFF5A8FEC)
+                                : Colors.grey,
+                            tooltip: widget.message.isPinned
+                                ? 'Открепить'
+                                : 'Закрепить',
+                            onTap: widget.onPinToggle,
+                          ),
+                          const SizedBox(width: 8),
+                          _buildControlButton(
+                            icon: _showCopied ? Icons.check : Icons.copy,
+                            color: _showCopied
+                                ? const Color(0xFF51CF66)
+                                : Colors.grey,
+                            tooltip: 'Копировать',
+                            onTap: _copyContent,
+                          ),
+                          const SizedBox(width: 8),
+                          _buildControlButton(
+                            icon: Icons.open_in_full,
+                            color: Colors.grey,
+                            tooltip: 'Развернуть',
+                            onTap: _showFullscreen,
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (widget.message.isPinned)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Container(
+                  width: double.infinity,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF5A8FEC).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFF5A8FEC).withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF5A8FEC).withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.push_pin,
+                          size: 12,
+                          color: Color(0xFF5A8FEC),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Закреплено',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF5A8FEC),
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHighlightedContent() {
+    final text = JsonHelper.formatContent(widget.message.displayContent);
+    final query = widget.highlightText?.toLowerCase() ?? '';
+
+    if (query.isEmpty) {
+      return SelectableText(
+        text,
+        style: const TextStyle(
+          fontFamily: 'monospace',
+          fontSize: 14,
+          color: Color(0xFFD4D4D4),
+          height: 1.5,
+        ),
+      );
+    }
+
+    final textLower = text.toLowerCase();
+    final spans = <TextSpan>[];
+    int lastIndex = 0;
+
+    int searchIndex = 0;
+    while ((searchIndex = textLower.indexOf(query, lastIndex)) != -1) {
+      if (searchIndex > lastIndex) {
+        spans.add(TextSpan(
+          text: text.substring(lastIndex, searchIndex),
+          style: const TextStyle(
+            fontFamily: 'monospace',
+            fontSize: 14,
+            color: Color(0xFFD4D4D4),
+            height: 1.5,
+          ),
+        ));
+      }
+      spans.add(TextSpan(
+        text: text.substring(searchIndex, searchIndex + query.length),
+        style: TextStyle(
+          fontFamily: 'monospace',
+          fontSize: 14,
+          color: Colors.black87,
+          backgroundColor: widget.isCurrentMatch
+              ? Colors.yellow[500]?.withOpacity(1.0)
+              : Colors.yellow[700]?.withOpacity(0.4),
+          height: 1.5,
+          fontWeight:
+              widget.isCurrentMatch ? FontWeight.bold : FontWeight.normal,
+        ),
+      ));
+
+      lastIndex = searchIndex + query.length;
+      searchIndex = lastIndex;
+    }
+    if (lastIndex < text.length) {
+      spans.add(TextSpan(
+        text: text.substring(lastIndex),
+        style: const TextStyle(
+          fontFamily: 'monospace',
+          fontSize: 14,
+          color: Color(0xFFD4D4D4),
+          height: 1.5,
+        ),
+      ));
+    }
+
+    return RichText(
+      text: TextSpan(children: spans),
+    );
+  }
+
+  Widget _buildControlButton({
+    required IconData icon,
+    required Color color,
+    required String tooltip,
+    required VoidCallback onTap,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: Provider.of<ThemeProvider>(context, listen: false).isDarkMode
+                ? const Color(0xFF1A1E24)
+                : const Color(0xFFE0E5EC),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Provider.of<ThemeProvider>(context, listen: false)
+                        .isDarkMode
+                    ? Colors.black54
+                    : Colors.grey.withOpacity(0.5),
+                blurRadius: 4,
+                offset: const Offset(2, 2),
+              ),
+              BoxShadow(
+                color: Provider.of<ThemeProvider>(context, listen: false)
+                        .isDarkMode
+                    ? const Color(0xFF2C313A)
+                    : Colors.white,
+                blurRadius: 4,
+                offset: const Offset(-2, -2),
+              ),
+            ],
+          ),
+          child: Icon(
+            icon,
+            size: 18,
+            color: color,
+          ),
+        ),
+      ),
+    );
+  }
+}

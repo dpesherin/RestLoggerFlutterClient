@@ -1,0 +1,14 @@
+<svg width="1024" height="1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#5A8FEC;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1F4788;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#grad)"/>
+  <rect x="102" y="102" width="820" height="820" rx="150" fill="none" stroke="white" stroke-width="40"/>
+  <text x="512" y="580" font-family="Arial, sans-serif" font-size="280" font-weight="bold" text-anchor="middle" fill="white">LOG</text>
+  <circle cx="512" cy="250" r="80" fill="white" opacity="0.9"/>
+  <circle cx="300" cy="750" r="60" fill="white" opacity="0.7"/>
+  <circle cx="724" cy="800" r="50" fill="white" opacity="0.8"/>
+</svg>
