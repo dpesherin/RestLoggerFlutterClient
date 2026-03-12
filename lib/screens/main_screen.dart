@@ -806,23 +806,8 @@ class _MainScreenState extends State<MainScreen> {
   Widget _buildMainContent(bool isDark, List<Widget> messageWidgets) {
     return Stack(
       children: [
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  context.appBackground,
-                  context.appPanelAlt.withValues(alpha: 0.45),
-                  context.appBackground,
-                ],
-              ),
-            ),
-          ),
-        ),
         Scaffold(
-          backgroundColor: Colors.transparent,
+          backgroundColor: context.appBackground,
           body: SizedBox(
             width: double.infinity,
             height: double.infinity,

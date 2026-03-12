@@ -76,62 +76,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.isDarkMode;
-
     return Scaffold(
       backgroundColor: context.appBackground,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    context.appBackground,
-                    context.appPanelAlt,
-                    context.appBackground,
-                  ],
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Container(
+            width: 420,
+            padding: const EdgeInsets.all(34),
+            decoration: context.panelDecoration(radius: 32).copyWith(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      context.appPanel.withValues(alpha: 0.96),
+                      context.appPanelAlt.withValues(alpha: 0.88),
+                    ],
+                  ),
                 ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: -80,
-            left: -20,
-            child: _buildGlowBlob(
-              size: 220,
-              color: AppTheme.accent.withValues(alpha: isDark ? 0.18 : 0.14),
-            ),
-          ),
-          Positioned(
-            right: -40,
-            bottom: -120,
-            child: _buildGlowBlob(
-              size: 320,
-              color: AppTheme.accentSoft.withValues(alpha: isDark ? 0.16 : 0.1),
-            ),
-          ),
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Container(
-                width: 420,
-                padding: const EdgeInsets.all(34),
-                decoration: context.panelDecoration(radius: 32).copyWith(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          context.appPanel.withValues(alpha: 0.96),
-                          context.appPanelAlt.withValues(alpha: 0.88),
-                        ],
-                      ),
-                    ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
@@ -312,12 +277,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -348,24 +311,6 @@ class _LoginScreenState extends State<LoginScreen> {
           border: InputBorder.none,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGlowBlob({
-    required double size,
-    required Color color,
-  }) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [color, Colors.transparent],
-          ),
         ),
       ),
     );
