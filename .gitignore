@@ -70,6 +70,7 @@ xcuserdata/
 /clear_storage.dart
 /app_icon.iconset/
 .env
+/update-service/
 
 # Symbolication related
 app.*.symbols

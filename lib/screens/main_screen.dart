@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +8,7 @@ import 'package:clipboard/clipboard.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/message.dart';
 import '../services/api_service.dart';
+import '../services/update_service.dart';
 import '../services/websocket_service.dart';
 import '../services/storage_service.dart';
 import '../utils/theme.dart';
@@ -18,6 +20,7 @@ import '../widgets/key_modal.dart';
 import '../widgets/sessions_modal.dart';
 import '../widgets/connection_status_modal.dart';
 import '../widgets/toast_widget.dart';
+import '../widgets/update_modal.dart';
 import 'login_screen.dart';
 
 class _OpenSearchIntent extends Intent {
@@ -40,6 +43,7 @@ Map<String, bool> _modalOpenState = {
   'keyModal': false,
   'sessionsModal': false,
   'connectionStatusModal': false,
+  'updateModal': false,
 };
 
 Future<T?> showModalWithGuard<T>(
@@ -121,9 +125,12 @@ class _MainScreenState extends State<MainScreen> {
   bool _isCheckingAuth = false;
   bool _showFAB = false;
   bool _searchPanelOpen = false;
+  bool _isCheckingUpdates = false;
+  bool _isInstallingUpdate = false;
   int _currentMatchIndex = -1;
   final List<Message> _matchedMessages = [];
   final Map<int, int> _messageMatchCount = {};
+  UpdateCheckResult? _lastUpdateResult;
   late _AppLifecycleObserver _lifecycleObserver;
   Timer? _searchDebounce;
   Timer? _findDebounce;
@@ -139,6 +146,7 @@ class _MainScreenState extends State<MainScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAuthAndRedirect();
+      _checkForUpdates(silentIfCurrent: true);
     });
 
     _scrollController.addListener(() {
@@ -181,6 +189,103 @@ class _MainScreenState extends State<MainScreen> {
     } catch (_) {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _checkForUpdates({required bool silentIfCurrent}) async {
+    if (_isCheckingUpdates || !UpdateService.isSupportedPlatform) return;
+
+    setState(() {
+      _isCheckingUpdates = true;
+    });
+
+    try {
+      final result = await UpdateService.checkForUpdates();
+      if (!mounted) return;
+
+      setState(() {
+        _lastUpdateResult = result;
+      });
+
+      if (result.hasUpdate) {
+        await _showUpdateModal(result);
+      } else if (!silentIfCurrent) {
+        ToastWidget.show(
+          context,
+          message: 'Установлена актуальная версия ${result.currentVersion}',
+          type: ToastType.info,
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      if (!silentIfCurrent) {
+        ToastWidget.show(
+          context,
+          message: 'Не удалось проверить обновления: $e',
+          type: ToastType.error,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCheckingUpdates = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _showUpdateModal(UpdateCheckResult result) async {
+    await showModalWithGuard(
+      context,
+      'updateModal',
+      UpdateModal(
+        result: result,
+        onInstall: () async {
+          final update = result.updateInfo;
+          if (update == null) return;
+
+          if (!mounted) return;
+
+          setState(() {
+            _isInstallingUpdate = true;
+          });
+
+          try {
+            final installResult =
+                await UpdateService.downloadAndInstallUpdate(update);
+
+            if (!mounted) return;
+
+            ToastWidget.show(
+              context,
+              message: installResult.message,
+              type: installResult.started
+                  ? ToastType.success
+                  : ToastType.warning,
+            );
+
+            if (installResult.started) {
+              Navigator.of(context).pop();
+              await Future<void>.delayed(const Duration(milliseconds: 500));
+              exit(0);
+            }
+          } catch (e) {
+            if (!mounted) return;
+            ToastWidget.show(
+              context,
+              message: 'Не удалось установить обновление: $e',
+              type: ToastType.error,
+            );
+          } finally {
+            if (mounted) {
+              setState(() {
+                _isInstallingUpdate = false;
+              });
+            }
+          }
+        },
+      ),
+      barrierDismissible: !(result.updateInfo?.mandatory ?? false),
+    );
   }
 
   void _connectWebSocket() {
@@ -938,6 +1043,22 @@ class _MainScreenState extends State<MainScreen> {
                                 onTap: _showConnectionStatusModal,
                               ),
                               const SizedBox(width: 8),
+                              _buildToolbarAction(
+                                icon: _isCheckingUpdates
+                                    ? Icons.sync_rounded
+                                    : (_isInstallingUpdate
+                                        ? Icons.download_for_offline_rounded
+                                        : Icons.system_update_alt_rounded),
+                                color: (_lastUpdateResult?.hasUpdate ?? false)
+                                    ? Colors.orange
+                                    : AppTheme.accent,
+                                onTap: _isInstallingUpdate
+                                    ? null
+                                    : () => _checkForUpdates(
+                                          silentIfCurrent: false,
+                                        ),
+                              ),
+                              const SizedBox(width: 8),
                               const ThemeToggle(),
                             ],
                           ),
@@ -1212,7 +1333,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget _buildToolbarAction({
     required IconData icon,
     required Color color,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
   }) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(22),
