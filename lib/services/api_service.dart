@@ -5,6 +5,18 @@ import '../services/storage_service.dart';
 import '../utils/config.dart';
 import '../utils/logger.dart';
 
+class AuthStatusInfo {
+  final bool isAuthenticated;
+  final int latencyMs;
+  final String message;
+
+  const AuthStatusInfo({
+    required this.isAuthenticated,
+    required this.latencyMs,
+    required this.message,
+  });
+}
+
 class ApiService {
   static String get baseUrl => AppConfig.apiBaseUrl;
 
@@ -233,6 +245,33 @@ class ApiService {
       return isAuth;
     } catch (e) {
       return false;
+    }
+  }
+
+  static Future<AuthStatusInfo> getAuthStatusInfo() async {
+    final stopwatch = Stopwatch()..start();
+
+    try {
+      final data = await whoami();
+      stopwatch.stop();
+
+      final isAuthenticated = data['status'] == 'ok';
+      final message = isAuthenticated
+          ? 'Авторизация подтверждена'
+          : data['msg']?.toString() ?? 'Не авторизован';
+
+      return AuthStatusInfo(
+        isAuthenticated: isAuthenticated,
+        latencyMs: stopwatch.elapsedMilliseconds,
+        message: message,
+      );
+    } catch (e) {
+      stopwatch.stop();
+      return AuthStatusInfo(
+        isAuthenticated: false,
+        latencyMs: stopwatch.elapsedMilliseconds,
+        message: e.toString(),
+      );
     }
   }
 }

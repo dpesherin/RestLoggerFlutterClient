@@ -16,6 +16,7 @@ import '../widgets/message_card.dart';
 import '../widgets/theme_toggle.dart';
 import '../widgets/key_modal.dart';
 import '../widgets/sessions_modal.dart';
+import '../widgets/connection_status_modal.dart';
 import '../widgets/toast_widget.dart';
 import 'login_screen.dart';
 
@@ -38,6 +39,7 @@ class _PreviousMatchIntent extends Intent {
 Map<String, bool> _modalOpenState = {
   'keyModal': false,
   'sessionsModal': false,
+  'connectionStatusModal': false,
 };
 
 Future<T?> showModalWithGuard<T>(
@@ -103,6 +105,18 @@ class _MainScreenState extends State<MainScreen> {
   bool _isLoading = true;
   String? _consumerKey;
   String? _username;
+  ConnectionStatus _connectionStatus = const ConnectionStatus(
+    isConnected: false,
+    isReconnecting: false,
+    reconnectAttempts: 0,
+    maxReconnectAttempts: WebSocketService.maxReconnectAttempts,
+    totalReconnects: 0,
+  );
+  AuthStatusInfo _authStatus = const AuthStatusInfo(
+    isAuthenticated: false,
+    latencyMs: 0,
+    message: 'Статус не загружен',
+  );
   bool _isLoggingOut = false;
   bool _isCheckingAuth = false;
   bool _showFAB = false;
@@ -154,11 +168,13 @@ class _MainScreenState extends State<MainScreen> {
     try {
       final user = await StorageService.getUser();
       final key = await StorageService.getConsumerKey();
+      final authStatus = await ApiService.getAuthStatusInfo();
 
       if (mounted) {
         setState(() {
           _username = user?.login;
           _consumerKey = key;
+          _authStatus = authStatus;
           _isLoading = false;
         });
       }
@@ -174,12 +190,20 @@ class _MainScreenState extends State<MainScreen> {
         if (mounted) {
           setState(() => _isConnected = connected);
           if (connected) {
+            _refreshAuthStatus();
             ToastWidget.show(
               context,
               message: 'Подключено к серверу',
               type: ToastType.success,
             );
           }
+        }
+      },
+      onStatusChange: (status) {
+        if (mounted) {
+          setState(() {
+            _connectionStatus = status;
+          });
         }
       },
     );
@@ -405,6 +429,25 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  Future<void> _showConnectionStatusModal() async {
+    await _refreshAuthStatus();
+
+    if (!mounted) return;
+
+    showModalWithGuard(
+      context,
+      'connectionStatusModal',
+      ConnectionStatusModal(
+        connectionStatus: _connectionStatus,
+        authStatus: _authStatus,
+        onReconnect: () {
+          Navigator.pop(context);
+          _wsService.reconnect();
+        },
+      ),
+    );
+  }
+
   Future<void> _openDocs() async {
     final Uri url = Uri.parse(AppConfig.docsUrl);
     try {
@@ -438,6 +481,16 @@ class _MainScreenState extends State<MainScreen> {
     } finally {
       _isCheckingAuth = false;
     }
+  }
+
+  Future<void> _refreshAuthStatus() async {
+    final status = await ApiService.getAuthStatusInfo();
+
+    if (!mounted) return;
+
+    setState(() {
+      _authStatus = status;
+    });
   }
 
   void _redirectToLogin() {
@@ -889,6 +942,16 @@ class _MainScreenState extends State<MainScreen> {
                                     ),
                                   ),
                                 ),
+                              const SizedBox(width: 8),
+                              _buildToolbarAction(
+                                icon: Icons.monitor_heart_outlined,
+                                color: _connectionStatus.isConnected
+                                    ? Colors.green
+                                    : (_connectionStatus.isReconnecting
+                                        ? Colors.orange
+                                        : const Color(0xFFFF6B6B)),
+                                onTap: _showConnectionStatusModal,
+                              ),
                               const SizedBox(width: 8),
                               const ThemeToggle(),
                             ],
