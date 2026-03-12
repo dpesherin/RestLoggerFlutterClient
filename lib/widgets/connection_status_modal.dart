@@ -102,66 +102,72 @@ class ConnectionStatusModal extends StatelessWidget {
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildMetricCard(
-                              context,
-                              label: 'WebSocket',
-                              value: connectionStatus.isConnected
-                                  ? 'Connected'
-                                  : (connectionStatus.isReconnecting
-                                      ? 'Reconnecting'
-                                      : 'Disconnected'),
-                              accentColor: connectionStatus.isConnected
-                                  ? Colors.green
-                                  : (connectionStatus.isReconnecting
-                                      ? Colors.orange
-                                      : Colors.redAccent),
+                      IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: _buildMetricCard(
+                                context,
+                                label: 'WebSocket',
+                                value: connectionStatus.isConnected
+                                    ? 'Connected'
+                                    : (connectionStatus.isReconnecting
+                                        ? 'Reconnecting'
+                                        : 'Disconnected'),
+                                accentColor: connectionStatus.isConnected
+                                    ? Colors.green
+                                    : (connectionStatus.isReconnecting
+                                        ? Colors.orange
+                                        : Colors.redAccent),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildMetricCard(
-                              context,
-                              label: 'Handshake + Auth',
-                              value: '$combinedMs ms',
-                              subtitle:
-                                  'Handshake: $handshakeMs ms • Auth: $authMs ms',
-                              accentColor: AppTheme.accent,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildMetricCard(
+                                context,
+                                label: 'Handshake + Auth',
+                                value: '$combinedMs ms',
+                                subtitle:
+                                    'Handshake: $handshakeMs ms • Auth: $authMs ms',
+                                accentColor: AppTheme.accent,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildMetricCard(
-                              context,
-                              label: 'Reconnects',
-                              value:
-                                  '${connectionStatus.reconnectAttempts}/${connectionStatus.maxReconnectAttempts}',
-                              subtitle:
-                                  'Всего переподключений: ${connectionStatus.totalReconnects}',
-                              accentColor: Colors.orange,
+                      IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: _buildMetricCard(
+                                context,
+                                label: 'Reconnects',
+                                value:
+                                    '${connectionStatus.reconnectAttempts}/${connectionStatus.maxReconnectAttempts}',
+                                subtitle:
+                                    'Всего переподключений: ${connectionStatus.totalReconnects}',
+                                accentColor: Colors.orange,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildMetricCard(
-                              context,
-                              label: 'Auth',
-                              value: authStatus.isAuthenticated
-                                  ? 'Authenticated'
-                                  : 'Failed',
-                              subtitle: authStatus.message,
-                              accentColor: authStatus.isAuthenticated
-                                  ? Colors.green
-                                  : Colors.redAccent,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildMetricCard(
+                                context,
+                                label: 'Auth',
+                                value: authStatus.isAuthenticated
+                                    ? 'Authenticated'
+                                    : 'Failed',
+                                subtitle: authStatus.message,
+                                accentColor: authStatus.isAuthenticated
+                                    ? Colors.green
+                                    : Colors.redAccent,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       if (connectionStatus.lastError != null) ...[
                         const SizedBox(height: 12),
