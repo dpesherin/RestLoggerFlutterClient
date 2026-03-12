@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import '../services/api_service.dart';
 import '../utils/theme.dart';
 import 'toast_widget.dart';
@@ -143,20 +144,24 @@ class _SessionsModalState extends State<SessionsModal> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(30),
       ),
-      child: Container(
-        width: 600,
-        constraints: const BoxConstraints(maxHeight: 500),
-        decoration: context.panelDecoration(radius: 30).copyWith(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  context.appPanel.withValues(alpha: 0.96),
-                  context.appPanelAlt.withValues(alpha: 0.9),
-                ],
-              ),
-            ),
-        child: Column(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(30),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+          child: Container(
+            width: 600,
+            constraints: const BoxConstraints(maxHeight: 500),
+            decoration: context.panelDecoration(radius: 30).copyWith(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      context.appPanel.withValues(alpha: 0.72),
+                      context.appPanelAlt.withValues(alpha: 0.58),
+                    ],
+                  ),
+                ),
+            child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
@@ -319,14 +324,14 @@ class _SessionsModalState extends State<SessionsModal> {
                                                   borderRadius:
                                                       BorderRadius.circular(12),
                                                 ),
-                                                  child: const Text(
-                                                    'Текущая',
-                                                    style: TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 10,
-                                                      fontWeight: FontWeight.w700,
-                                                    ),
+                                                child: const Text(
+                                                  'Текущая',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w700,
                                                   ),
+                                                ),
                                               ),
                                           ],
                                         ),
@@ -440,6 +445,8 @@ class _SessionsModalState extends State<SessionsModal> {
               ),
             ),
           ],
+        ),
+      ),
         ),
       ),
     );

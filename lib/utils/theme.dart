@@ -246,6 +246,16 @@ extension AppThemeContext on BuildContext {
         ),
       ];
 
+  Gradient get glassHighlightGradient => LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.white.withValues(alpha: isDarkMode ? 0.12 : 0.42),
+          Colors.white.withValues(alpha: isDarkMode ? 0.05 : 0.16),
+          Colors.white.withValues(alpha: 0.02),
+        ],
+      );
+
   LinearGradient get appAccentGradient => const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
@@ -253,9 +263,17 @@ extension AppThemeContext on BuildContext {
       );
 
   BoxDecoration panelDecoration({double radius = 24}) => BoxDecoration(
-        color: appPanel.withValues(alpha: isDarkMode ? 0.94 : 0.92),
+        color: appPanel.withValues(alpha: isDarkMode ? 0.72 : 0.68),
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: appBorder.withValues(alpha: 0.7)),
-        boxShadow: appSoftShadow,
+        border: Border.all(color: appBorder.withValues(alpha: 0.42)),
+        boxShadow: [
+          ...appSoftShadow,
+          BoxShadow(
+            color: (isDarkMode ? Colors.white : AppTheme.accentSoft)
+                .withValues(alpha: isDarkMode ? 0.05 : 0.08),
+            blurRadius: 0,
+            spreadRadius: 0.5,
+          ),
+        ],
       );
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -775,108 +776,125 @@ class _MainScreenState extends State<MainScreen> {
             child: Column(
               children: [
                 SafeArea(
-                  child: Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.all(16),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 12),
-                    decoration: context.panelDecoration(radius: 28).copyWith(
-                          color: context.appPanel.withValues(alpha: 0.82),
-                        ),
-                    child: Row(
-                      children: [
-                        Text(
-                          '{..Logger..}',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.2,
-                            color: context.appTextPrimary,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(28),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
                           ),
-                        ),
-                        const Spacer(),
-                        Row(
-                          children: [
-                            TextButton(
-                              onPressed: () {},
-                              child: const Text(
-                                'Главная',
+                          decoration:
+                              context.panelDecoration(radius: 28).copyWith(
+                            color: context.appPanel.withValues(alpha: 0.42),
+                          ),
+                          child: Row(
+                            children: [
+                              Text(
+                                '{..Logger..}',
                                 style: TextStyle(
-                                  color: Color(0xFF5A8FEC),
+                                  fontSize: 22,
                                   fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.2,
+                                  color: context.appTextPrimary,
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            TextButton(
-                              onPressed: _openDocs,
-                              child: Text(
-                                'Документация',
-                                style: TextStyle(
-                                  color: context.appTextMuted,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(width: 16),
-                        if (_username != null)
-                          InkWell(
-                            onTap: _showKeyModal,
-                            borderRadius: BorderRadius.circular(30),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: AppTheme.accent.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(999),
-                                border: Border.all(
-                                  color:
-                                      AppTheme.accent.withValues(alpha: 0.22),
-                                ),
-                              ),
-                              child: Row(
+                              const Spacer(),
+                              Row(
                                 children: [
-                                  const Icon(Icons.person,
-                                      size: 18, color: Color(0xFF5A8FEC)),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    _username!,
-                                    style: const TextStyle(
-                                      color: AppTheme.accent,
-                                      fontWeight: FontWeight.w600,
+                                  TextButton(
+                                    onPressed: () {},
+                                    child: const Text(
+                                      'Главная',
+                                      style: TextStyle(
+                                        color: Color(0xFF5A8FEC),
+                                        fontWeight: FontWeight.w700,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  Container(
-                                    width: 10,
-                                    height: 10,
-                                    decoration: BoxDecoration(
-                                      color: _isConnected
-                                          ? Colors.green
-                                          : Colors.red,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: _isConnected
-                                              ? Colors.green.withValues(
-                                                  alpha: 0.4)
-                                              : Colors.red.withValues(
-                                                  alpha: 0.4),
-                                          blurRadius: 10,
-                                          spreadRadius: 2,
-                                        ),
-                                      ],
+                                  TextButton(
+                                    onPressed: _openDocs,
+                                    child: Text(
+                                      'Документация',
+                                      style: TextStyle(
+                                        color: context.appTextMuted,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
+                              const SizedBox(width: 8),
+                              if (_username != null)
+                                InkWell(
+                                  onTap: _showKeyModal,
+                                  borderRadius: BorderRadius.circular(30),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          AppTheme.accent.withValues(alpha: 0.09),
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(
+                                        color: AppTheme.accent
+                                            .withValues(alpha: 0.18),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.person,
+                                          size: 18,
+                                          color: Color(0xFF5A8FEC),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          _username!,
+                                          style: const TextStyle(
+                                            color: AppTheme.accent,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          width: 10,
+                                          height: 10,
+                                          decoration: BoxDecoration(
+                                            color: _isConnected
+                                                ? Colors.green
+                                                : Colors.red,
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: _isConnected
+                                                    ? Colors.green.withValues(
+                                                        alpha: 0.4)
+                                                    : Colors.red.withValues(
+                                                        alpha: 0.4),
+                                                blurRadius: 10,
+                                                spreadRadius: 2,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              const SizedBox(width: 8),
+                              const ThemeToggle(),
+                            ],
                           ),
-                        const SizedBox(width: 8),
-                        const ThemeToggle(),
-                      ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -886,30 +904,48 @@ class _MainScreenState extends State<MainScreen> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: Container(
-                          decoration: context.panelDecoration(radius: 24)
-                              .copyWith(color: context.appPanel.withValues(alpha: 0.78)),
-                          child: TextField(
-                            controller: _searchController,
-                            style: TextStyle(color: context.appTextPrimary),
-                            decoration: InputDecoration(
-                              hintText: 'Поиск по модулю...',
-                              prefixIcon: const Icon(Icons.search,
-                                  color: AppTheme.accent, size: 20),
-                              suffixIcon: _searchController.text.isNotEmpty
-                                  ? IconButton(
-                                      icon: const Icon(Icons.clear,
-                                          color: AppTheme.accent, size: 18),
-                                      onPressed: () {
-                                        _searchController.clear();
-                                        setState(() {});
-                                      },
-                                    )
-                                  : null,
-                              fillColor: Colors.transparent,
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 12),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                            child: Container(
+                              decoration:
+                                  context.panelDecoration(radius: 24).copyWith(
+                                color: context.appPanel.withValues(alpha: 0.4),
+                              ),
+                              child: TextField(
+                                controller: _searchController,
+                                style: TextStyle(
+                                  color: context.appTextPrimary,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: 'Поиск по модулю...',
+                                  prefixIcon: const Icon(
+                                    Icons.search,
+                                    color: AppTheme.accent,
+                                    size: 20,
+                                  ),
+                                  suffixIcon: _searchController.text.isNotEmpty
+                                      ? IconButton(
+                                          icon: const Icon(
+                                            Icons.clear,
+                                            color: AppTheme.accent,
+                                            size: 18,
+                                          ),
+                                          onPressed: () {
+                                            _searchController.clear();
+                                            setState(() {});
+                                          },
+                                        )
+                                      : null,
+                                  fillColor: Colors.transparent,
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 12,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -935,20 +971,28 @@ class _MainScreenState extends State<MainScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.inbox,
-                                  size: 64,
-                                  color: context.appTextMuted),
+                              Icon(
+                                Icons.inbox,
+                                size: 64,
+                                color: context.appTextMuted,
+                              ),
                               const SizedBox(height: 16),
-                              Text('Нет сообщений',
-                                  style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                      color: context.appTextPrimary)),
+                              Text(
+                                'Нет сообщений',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: context.appTextPrimary,
+                                ),
+                              ),
                               const SizedBox(height: 8),
-                              Text('Ожидание сообщений от сервера...',
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      color: context.appTextMuted)),
+                              Text(
+                                'Ожидание сообщений от сервера...',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: context.appTextMuted,
+                                ),
+                              ),
                             ],
                           ),
                         )
@@ -989,116 +1033,122 @@ class _MainScreenState extends State<MainScreen> {
       top: 16,
       right: 16,
       child: SafeArea(
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            width: 350,
-            decoration: context.panelDecoration(radius: 20).copyWith(
-                  color: context.appPanel.withValues(alpha: 0.94),
-                ),
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                width: 480,
+                decoration: context.panelDecoration(radius: 18).copyWith(
+                      color: context.appPanel.withValues(alpha: 0.52),
+                    ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Row(
                   children: [
-                    Text(
-                      'ПОИСК',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: context.appTextMuted,
-                        letterSpacing: 1.1,
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: context.appPanelAlt.withValues(alpha: 0.72),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.search_rounded,
+                        size: 18,
+                        color: AppTheme.accent,
                       ),
                     ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.close, size: 18),
-                      onPressed: _closeSearchPanel,
-                      constraints: const BoxConstraints(),
-                      padding: EdgeInsets.zero,
-                      color: context.appTextMuted,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: context.appPanelAlt.withValues(alpha: 0.48),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: context.appBorder.withValues(alpha: 0.38),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.white.withValues(
+                                alpha: context.isDarkMode ? 0.03 : 0.18,
+                              ),
+                              blurRadius: 12,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                        child: TextField(
+                          focusNode: _findFocusNode,
+                          controller: _findController,
+                          style: TextStyle(
+                            color: context.appTextPrimary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          decoration: const InputDecoration(
+                            hintText: 'Найти в сообщениях',
+                            fillColor: Colors.transparent,
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  focusNode: _findFocusNode,
-                  controller: _findController,
-                  style: TextStyle(
-                    color: context.appTextPrimary,
-                    fontSize: 13,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Введите текст...',
-                    fillColor: context.appPanelAlt,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                    isDense: true,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                if (_findController.text.isNotEmpty)
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
+                    if (_findController.text.isNotEmpty) ...[
                       Container(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: context.appPanelAlt.withValues(alpha: 0.58),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: context.appBorder.withValues(alpha: 0.38),
+                          ),
+                        ),
                         child: Text(
                           _matchedMessages.isEmpty
-                              ? 'Совпадений не найдено'
+                              ? '0 из 0'
                               : '${_currentMatchIndex + 1} из ${_matchedMessages.length}',
                           style: TextStyle(
                             fontSize: 11,
                             color: _matchedMessages.isEmpty
-                                ? Colors.red
-                                : AppTheme.accent,
-                            fontWeight: FontWeight.w600,
+                                ? Colors.redAccent
+                                : context.appTextPrimary,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: 32,
-                            height: 32,
-                            child: IconButton(
-                              icon: const Icon(Icons.arrow_upward),
-                              onPressed: _matchedMessages.isNotEmpty
-                                  ? _goToPreviousMatch
-                                  : null,
-                              constraints: const BoxConstraints(),
-                              padding: EdgeInsets.zero,
-                              iconSize: 16,
-                              color: AppTheme.accent,
-                              disabledColor: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          SizedBox(
-                            width: 32,
-                            height: 32,
-                            child: IconButton(
-                              icon: const Icon(Icons.arrow_downward),
-                              onPressed: _matchedMessages.isNotEmpty
-                                  ? _goToNextMatch
-                                  : null,
-                              constraints: const BoxConstraints(),
-                              padding: EdgeInsets.zero,
-                              iconSize: 16,
-                              color: AppTheme.accent,
-                              disabledColor: Colors.grey[600],
-                            ),
-                          ),
-                        ],
+                      _buildSearchActionButton(
+                        icon: Icons.keyboard_arrow_up_rounded,
+                        onPressed: _matchedMessages.isNotEmpty
+                            ? _goToPreviousMatch
+                            : null,
                       ),
+                      const SizedBox(width: 6),
+                      _buildSearchActionButton(
+                        icon: Icons.keyboard_arrow_down_rounded,
+                        onPressed:
+                            _matchedMessages.isNotEmpty ? _goToNextMatch : null,
+                      ),
+                      const SizedBox(width: 6),
                     ],
-                  ),
-              ],
+                    _buildSearchActionButton(
+                      icon: Icons.close_rounded,
+                      onPressed: _closeSearchPanel,
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -1116,14 +1166,51 @@ class _MainScreenState extends State<MainScreen> {
     required Color color,
     required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
+    return ClipRRect(
       borderRadius: BorderRadius.circular(22),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: context.panelDecoration(radius: 22)
-            .copyWith(color: context.appPanel.withValues(alpha: 0.82)),
-        child: Icon(icon, color: color, size: 20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(22),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: context.panelDecoration(radius: 22).copyWith(
+              color: context.appPanel.withValues(alpha: 0.44),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  context.appPanel.withValues(alpha: 0.52),
+                  context.appPanelAlt.withValues(alpha: 0.28),
+                ],
+              ),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchActionButton({
+    required IconData icon,
+    required VoidCallback? onPressed,
+  }) {
+    return SizedBox(
+      width: 32,
+      height: 32,
+      child: IconButton(
+        icon: Icon(icon, size: 18),
+        onPressed: onPressed,
+        constraints: const BoxConstraints(),
+        padding: EdgeInsets.zero,
+        style: IconButton.styleFrom(
+          backgroundColor: context.appPanelAlt.withValues(alpha: 0.56),
+          foregroundColor: AppTheme.accent,
+          disabledForegroundColor: context.appTextMuted,
+          side: BorderSide(color: context.appBorder.withValues(alpha: 0.34)),
+        ),
       ),
     );
   }

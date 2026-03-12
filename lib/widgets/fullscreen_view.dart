@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:clipboard/clipboard.dart';
 import '../models/message.dart';
 import '../utils/json_helper.dart';
@@ -24,20 +25,24 @@ class _FullscreenViewState extends State<FullscreenView> {
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(16),
-      child: Container(
-        width: screenSize.width * 0.9,
-        height: screenSize.height * 0.9,
-        decoration: context.panelDecoration(radius: 24).copyWith(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  context.appPanel.withValues(alpha: 0.96),
-                  context.appPanelAlt.withValues(alpha: 0.88),
-                ],
-              ),
-            ),
-        child: Column(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+          child: Container(
+            width: screenSize.width * 0.9,
+            height: screenSize.height * 0.9,
+            decoration: context.panelDecoration(radius: 24).copyWith(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      context.appPanel.withValues(alpha: 0.72),
+                      context.appPanelAlt.withValues(alpha: 0.58),
+                    ],
+                  ),
+                ),
+            child: Column(
           children: [
             Container(
               padding: const EdgeInsets.all(16),
@@ -154,6 +159,8 @@ class _FullscreenViewState extends State<FullscreenView> {
               ),
             ),
           ],
+        ),
+      ),
         ),
       ),
     );

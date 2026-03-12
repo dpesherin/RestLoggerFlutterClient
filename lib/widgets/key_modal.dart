@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:clipboard/clipboard.dart';
 import 'package:provider/provider.dart';
 import '../utils/theme.dart';
@@ -27,19 +28,23 @@ class KeyModal extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(30),
       ),
-      child: Container(
-        width: 600,
-        decoration: context.panelDecoration(radius: 30).copyWith(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  context.appPanel.withValues(alpha: 0.96),
-                  context.appPanelAlt.withValues(alpha: 0.9),
-                ],
-              ),
-            ),
-        child: Column(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(30),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+          child: Container(
+            width: 600,
+            decoration: context.panelDecoration(radius: 30).copyWith(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      context.appPanel.withValues(alpha: 0.72),
+                      context.appPanelAlt.withValues(alpha: 0.58),
+                    ],
+                  ),
+                ),
+            child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
@@ -336,6 +341,8 @@ class KeyModal extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
         ),
       ),
     );
