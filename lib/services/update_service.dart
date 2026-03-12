@@ -183,12 +183,13 @@ class UpdateService {
     final scriptFile = File(
       '${installerFile.parent.path}${Platform.pathSeparator}run_update.ps1',
     );
+    final currentPid = pid;
     final currentExe = Platform.resolvedExecutable.replaceAll("'", "''");
     final installerPath = installerFile.path.replaceAll("'", "''");
     final script = '''
 \$installerPath = '$installerPath'
 \$targetExe = '$currentExe'
-\$pidToWait = $pid
+\$pidToWait = $currentPid
 
 while (Get-Process -Id \$pidToWait -ErrorAction SilentlyContinue) {
   Start-Sleep -Milliseconds 500
