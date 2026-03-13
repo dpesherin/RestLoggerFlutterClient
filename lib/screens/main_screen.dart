@@ -265,7 +265,7 @@ class _MainScreenState extends State<MainScreen> {
 
             if (installResult.started) {
               Navigator.of(context).pop();
-              await Future<void>.delayed(const Duration(milliseconds: 500));
+              await Future<void>.delayed(const Duration(milliseconds: 1200));
               exit(0);
             }
           } catch (e) {

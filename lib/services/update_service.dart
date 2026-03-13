@@ -183,30 +183,66 @@ class UpdateService {
     final scriptFile = File(
       '${installerFile.parent.path}${Platform.pathSeparator}run_update.ps1',
     );
+    final logFile = File(
+      '${installerFile.parent.path}${Platform.pathSeparator}update.log',
+    );
     final currentPid = pid;
     final currentExe = Platform.resolvedExecutable.replaceAll("'", "''");
     final installerPath = installerFile.path.replaceAll("'", "''");
+    final logPath = logFile.path.replaceAll("'", "''");
     final script = '''
+\$ErrorActionPreference = 'Stop'
 \$installerPath = '$installerPath'
 \$targetExe = '$currentExe'
 \$pidToWait = $currentPid
+\$logFile = '$logPath'
 
-while (Get-Process -Id \$pidToWait -ErrorAction SilentlyContinue) {
-  Start-Sleep -Milliseconds 500
+function Write-UpdateLog {
+  param([string]\$message)
+  \$timestamp = Get-Date -Format 'yyyy-MM-ddTHH:mm:ss.fff'
+  Add-Content -Path \$logFile -Value "[\$timestamp] \$message"
 }
 
-Start-Process -FilePath \$installerPath -ArgumentList '/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART' -Verb RunAs -Wait
+Write-UpdateLog "Windows updater script started"
+Write-UpdateLog "Installer path: \$installerPath"
+Write-UpdateLog "Target exe: \$targetExe"
+Write-UpdateLog "Waiting for PID \$pidToWait to exit"
 
-if (Test-Path \$targetExe) {
-  Start-Process -FilePath \$targetExe
+try {
+  while (Get-Process -Id \$pidToWait -ErrorAction SilentlyContinue) {
+    Start-Sleep -Milliseconds 500
+  }
+
+  Write-UpdateLog "Main app exited, starting installer"
+  \$installerProcess = Start-Process -FilePath \$installerPath -ArgumentList '/SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART' -Verb RunAs -Wait -PassThru
+  Write-UpdateLog "Installer finished with exit code: \$((\$installerProcess | Select-Object -ExpandProperty ExitCode))"
+
+  if (Test-Path \$targetExe) {
+    Write-UpdateLog "Restarting app"
+    Start-Process -FilePath \$targetExe
+  } else {
+    Write-UpdateLog "Target exe not found after install"
+  }
+} catch {
+  Write-UpdateLog "Updater failed: \$($_.Exception.Message)"
+  Write-UpdateLog "Stack: \$($_.ScriptStackTrace)"
+  throw
 }
 ''';
 
     await scriptFile.writeAsString(script);
 
+    await logFile.writeAsString(
+      '[${DateTime.now().toIso8601String()}] Prepared Windows updater files\n',
+    );
+
+    final powerShellPath = _resolveWindowsPowerShellPath();
+
     await Process.start(
-      'powershell',
+      powerShellPath,
       [
+        '-NoProfile',
+        '-NonInteractive',
         '-ExecutionPolicy',
         'Bypass',
         '-File',
@@ -215,7 +251,18 @@ if (Test-Path \$targetExe) {
       mode: ProcessStartMode.detached,
     );
 
-    logger.info('Запущен Windows updater: ${scriptFile.path}');
+    logger.info(
+      'Запущен Windows updater: ${scriptFile.path} (log: ${logFile.path}, shell: $powerShellPath)',
+    );
+  }
+
+  static String _resolveWindowsPowerShellPath() {
+    final systemRoot = Platform.environment['SystemRoot'];
+    if (systemRoot != null && systemRoot.isNotEmpty) {
+      return '$systemRoot\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
+    }
+
+    return 'powershell.exe';
   }
 
   static Future<void> _startMacOsInstaller(File dmgFile) async {
