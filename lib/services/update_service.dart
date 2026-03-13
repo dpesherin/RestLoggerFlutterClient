@@ -224,8 +224,8 @@ try {
     Write-UpdateLog "Target exe not found after install"
   }
 } catch {
-  Write-UpdateLog "Updater failed: \$($_.Exception.Message)"
-  Write-UpdateLog "Stack: \$($_.ScriptStackTrace)"
+  Write-UpdateLog "Updater failed: \$($PSItem.Exception.Message)"
+  Write-UpdateLog "Stack: \$($PSItem.ScriptStackTrace)"
   throw
 }
 ''';
