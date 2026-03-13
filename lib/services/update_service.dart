@@ -183,6 +183,9 @@ class UpdateService {
     final scriptFile = File(
       '${installerFile.parent.path}${Platform.pathSeparator}run_update.ps1',
     );
+    final launcherFile = File(
+      '${installerFile.parent.path}${Platform.pathSeparator}run_update.cmd',
+    );
     final logFile = File(
       '${installerFile.parent.path}${Platform.pathSeparator}update.log',
     );
@@ -232,27 +235,34 @@ try {
 
     await scriptFile.writeAsString(script);
 
+    final launcherScript = '''
+@echo off
+setlocal
+echo [%date% %time%] CMD launcher started>>"${logFile.path}"
+"${_resolveWindowsPowerShellPath()}" -NoProfile -ExecutionPolicy Bypass -File "${scriptFile.path}" >>"${logFile.path}" 2>&1
+echo [%date% %time%] CMD launcher finished with exit code %errorlevel%>>"${logFile.path}"
+''';
+
+    await launcherFile.writeAsString(launcherScript);
+
     await logFile.writeAsString(
       '[${DateTime.now().toIso8601String()}] Prepared Windows updater files\n',
     );
 
     final powerShellPath = _resolveWindowsPowerShellPath();
 
-    await Process.start(
-      powerShellPath,
+    await Process.run(
+      'cmd.exe',
       [
-        '-NoProfile',
-        '-NonInteractive',
-        '-ExecutionPolicy',
-        'Bypass',
-        '-File',
-        scriptFile.path,
+        '/c',
+        'start',
+        '""',
+        launcherFile.path,
       ],
-      mode: ProcessStartMode.detached,
     );
 
     logger.info(
-      'Запущен Windows updater: ${scriptFile.path} (log: ${logFile.path}, shell: $powerShellPath)',
+      'Запущен Windows updater: ${scriptFile.path} (launcher: ${launcherFile.path}, log: ${logFile.path}, shell: $powerShellPath)',
     );
   }
 
