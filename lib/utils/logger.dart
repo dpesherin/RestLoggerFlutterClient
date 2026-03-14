@@ -68,7 +68,9 @@ class FileLogger {
       _writeToFile(
           '🕐 Время: ${DateTime.now().toIso8601String()}', LogLevel.info);
       _writeToFile('=' * 50, LogLevel.info);
-    } catch (e) {}
+    } catch (e, stackTrace) {
+      _writeFallbackError('Failed to initialize file logger', e, stackTrace);
+    }
   }
 
   Future<void> _rotateLog() async {
@@ -80,7 +82,9 @@ class FileLogger {
         await rotatedFile.delete();
       }
       await _logFile!.rename(rotatedFile.path);
-    } catch (e) {}
+    } catch (e, stackTrace) {
+      _writeFallbackError('Failed to rotate log file', e, stackTrace);
+    }
   }
 
   void _writeToFile(String message, LogLevel level) {
@@ -96,7 +100,9 @@ class FileLogger {
         mode: FileMode.append,
         flush: true,
       );
-    } catch (e) {}
+    } catch (e, stackTrace) {
+      _writeFallbackError('Failed to write log entry', e, stackTrace);
+    }
   }
 
   String _levelToString(LogLevel level) {
@@ -157,7 +163,9 @@ class FileLogger {
     if (_logFile != null) {
       try {
         _logFile!.writeAsStringSync('', mode: FileMode.append);
-      } catch (e) {}
+      } catch (e, stackTrace) {
+        _writeFallbackError('Failed to flush fatal log entry', e, stackTrace);
+      }
     }
   }
 
@@ -187,9 +195,11 @@ class FileLogger {
         await logDir.create(recursive: true);
       }
 
-      final logFile = File('${logDir.path}${Platform.pathSeparator}$logFileName');
+      final logFile =
+          File('${logDir.path}${Platform.pathSeparator}$logFileName');
       return logFile.path;
     } catch (e) {
+      _writeFallbackError('Failed to resolve Windows log path', e, null);
       return null;
     }
   }
@@ -203,7 +213,20 @@ class FileLogger {
         final dir = File(path).parent;
         await Process.run('explorer', [dir.path]);
       }
-    } catch (e) {}
+    } catch (e, stackTrace) {
+      _writeFallbackError('Failed to open logs folder', e, stackTrace);
+    }
+  }
+
+  void _writeFallbackError(
+    String message,
+    Object error,
+    StackTrace? stackTrace,
+  ) {
+    stderr.writeln('[LOGGER_FALLBACK] $message: $error');
+    if (stackTrace != null) {
+      stderr.writeln(stackTrace.toString().split('\n').take(5).join('\n'));
+    }
   }
 }
 

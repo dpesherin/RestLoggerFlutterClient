@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
 class WindowManagerHelper {
+  static const Size _initialSize = Size(1500, 900);
+  static const Size _minimumSize = Size(1280, 720);
+
   static final WindowManagerHelper _instance = WindowManagerHelper._internal();
   factory WindowManagerHelper() => _instance;
   WindowManagerHelper._internal();
@@ -13,9 +16,9 @@ class WindowManagerHelper {
 
     await windowManager.ensureInitialized();
 
-    WindowOptions windowOptions = WindowOptions(
-      size: const Size(1200, 800),
-      minimumSize: const Size(800, 600),
+    const windowOptions = WindowOptions(
+      size: _initialSize,
+      minimumSize: _minimumSize,
       center: true,
       backgroundColor: Colors.transparent,
       skipTaskbar: false,
@@ -23,6 +26,9 @@ class WindowManagerHelper {
     );
 
     windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.setMinimumSize(_minimumSize);
+      await windowManager.setSize(_initialSize);
+      await windowManager.center();
       await windowManager.show();
       await windowManager.focus();
     });

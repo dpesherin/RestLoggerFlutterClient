@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/api_documentation_project.dart';
 import '../models/user.dart';
 import '../utils/logger.dart';
 
@@ -10,6 +11,9 @@ class StorageService {
   static const String _consumerKey = 'consumer_key';
   static const String _sessionIdKey = 'session_id';
   static const String _themeKey = 'theme_mode';
+  static const String _apiDocumentationProjectsKey =
+      'api_documentation_projects';
+  static const String _autoCheckUpdatesKey = 'auto_check_updates';
 
   static late SharedPreferences _prefs;
 
@@ -160,6 +164,62 @@ class StorageService {
     } catch (e, stack) {
       logger.warning('Не удалось очистить хранилище: $e');
       logger.debug(stack.toString());
+    }
+  }
+
+  static Future<void> saveApiDocumentationProjects(
+    List<ApiDocumentationProject> projects,
+  ) async {
+    try {
+      final projectsJson =
+          json.encode(projects.map((project) => project.toJson()).toList());
+      await _prefs.setString(_apiDocumentationProjectsKey, projectsJson);
+    } catch (e, stack) {
+      logger.warning('Не удалось сохранить проекты документации: $e');
+      logger.debug(stack.toString());
+    }
+  }
+
+  static Future<List<ApiDocumentationProject>>
+      getApiDocumentationProjects() async {
+    try {
+      final projectsJson = _prefs.getString(_apiDocumentationProjectsKey);
+      if (projectsJson == null || projectsJson.isEmpty) {
+        return const [];
+      }
+
+      final decoded = json.decode(projectsJson);
+      if (decoded is! List) return const [];
+
+      return decoded
+          .whereType<Map>()
+          .map((item) => ApiDocumentationProject.fromJson(
+                Map<String, dynamic>.from(item),
+              ))
+          .toList();
+    } catch (e, stack) {
+      logger.warning('Не удалось прочитать проекты документации: $e');
+      logger.debug(stack.toString());
+      return const [];
+    }
+  }
+
+  static Future<void> saveAutoCheckUpdates(bool enabled) async {
+    try {
+      await _prefs.setBool(_autoCheckUpdatesKey, enabled);
+    } catch (e, stack) {
+      logger.warning('Не удалось сохранить настройку автообновлений: $e');
+      logger.debug(stack.toString());
+    }
+  }
+
+  static Future<bool> getAutoCheckUpdates() async {
+    try {
+      return _prefs.getBool(_autoCheckUpdatesKey) ?? true;
+    } catch (e, stack) {
+      logger.warning('Не удалось прочитать настройку автообновлений: $e');
+      logger.debug(stack.toString());
+      return true;
     }
   }
 }

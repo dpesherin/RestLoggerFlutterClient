@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/storage_service.dart';
+import '../repositories/auth_repository.dart';
 import '../utils/theme.dart';
 import 'login_screen.dart';
 import 'main_screen.dart';
@@ -14,6 +14,7 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
+  final AuthRepository _authRepository = const AuthRepository();
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
@@ -44,12 +45,10 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(seconds: 2));
 
     try {
-      final user = await StorageService.getUser();
-      final consumerKey = await StorageService.getConsumerKey();
-
+      final hasStoredSession = await _authRepository.hasStoredSession();
       if (!mounted) return;
 
-      if (user != null && consumerKey != null) {
+      if (hasStoredSession) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const MainScreen()),
         );

@@ -1,7 +1,7 @@
 name: "logger_flutter_client"
 description: "LoggerFlutterClient - приложение для просмотра логов"
 publish_to: "none"
-version: "1.0.0+1"
+version: "1.0.2+1"
 environment:
   sdk: ">=3.0.0 <4.0.0"
 dependencies:
@@ -26,6 +26,7 @@ dependencies:
   highlight: "^0.7.0"
   window_manager: "^0.3.7"
   flutter_dotenv: "^5.1.0"
+  file_selector: ^1.0.3
 dev_dependencies:
   flutter_test:
     sdk: "flutter"

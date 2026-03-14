@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/storage_service.dart';
+import '../repositories/settings_repository.dart';
 import 'logger.dart';
 
 class ThemeProvider extends ChangeNotifier {
+  ThemeProvider({
+    SettingsRepository? settingsRepository,
+  }) : _settingsRepository = settingsRepository ?? const SettingsRepository() {
+    _loadTheme();
+  }
+
+  final SettingsRepository _settingsRepository;
   ThemeMode _themeMode = ThemeMode.system;
 
   ThemeMode get themeMode => _themeMode;
@@ -12,13 +19,9 @@ class ThemeProvider extends ChangeNotifier {
     return _themeMode == ThemeMode.dark;
   }
 
-  ThemeProvider() {
-    _loadTheme();
-  }
-
   Future<void> _loadTheme() async {
     try {
-      final savedTheme = await StorageService.getThemeMode();
+      final savedTheme = await _settingsRepository.getThemeMode();
       if (savedTheme != null) {
         _themeMode = savedTheme;
         notifyListeners();
@@ -32,14 +35,14 @@ class ThemeProvider extends ChangeNotifier {
   Future<void> toggleTheme() async {
     _themeMode =
         _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-    await StorageService.saveThemeMode(_themeMode);
+    await _settingsRepository.saveThemeMode(_themeMode);
     notifyListeners();
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
     if (_themeMode != mode) {
       _themeMode = mode;
-      await StorageService.saveThemeMode(_themeMode);
+      await _settingsRepository.saveThemeMode(_themeMode);
       notifyListeners();
     }
   }
@@ -55,6 +58,33 @@ class AppTheme {
   static const Color lightBg = Color(0xFFF3F7FD);
   static const Color lightPanel = Color(0xFFFFFFFF);
   static const Color lightPanelAlt = Color(0xFFE8F0FB);
+
+  static SwitchThemeData _switchTheme() {
+    return SwitchThemeData(
+      thumbColor: WidgetStateProperty.resolveWith<Color?>((states) {
+        if (states.contains(WidgetState.disabled)) {
+          return Colors.white.withValues(alpha: 0.6);
+        }
+        return Colors.white;
+      }),
+      thumbIcon: const WidgetStatePropertyAll<Icon?>(null),
+      trackColor: WidgetStateProperty.resolveWith<Color?>((states) {
+        if (states.contains(WidgetState.disabled)) {
+          return accent.withValues(alpha: 0.28);
+        }
+        if (states.contains(WidgetState.selected)) {
+          return accent;
+        }
+        return const Color(0xFF8EA3C5).withValues(alpha: 0.32);
+      }),
+      trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+      trackOutlineWidth: const WidgetStatePropertyAll<double>(0),
+      overlayColor: WidgetStateProperty.resolveWith<Color?>((states) {
+        return Colors.transparent;
+      }),
+      splashRadius: 0,
+    );
+  }
 
   static final lightTheme = ThemeData(
     brightness: Brightness.light,
@@ -123,6 +153,7 @@ class AppTheme {
         textStyle: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600),
       ),
     ),
+    switchTheme: _switchTheme(),
   );
 
   static final darkTheme = ThemeData(
@@ -137,8 +168,8 @@ class AppTheme {
       onPrimary: Colors.white,
       error: Color(0xFFFF6E7F),
     ),
-    textTheme: GoogleFonts.spaceGroteskTextTheme(ThemeData.dark().textTheme)
-        .apply(
+    textTheme:
+        GoogleFonts.spaceGroteskTextTheme(ThemeData.dark().textTheme).apply(
       bodyColor: const Color(0xFFF4F7FC),
       displayColor: const Color(0xFFF4F7FC),
     ),
@@ -193,17 +224,16 @@ class AppTheme {
         textStyle: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600),
       ),
     ),
+    switchTheme: _switchTheme(),
   );
 }
 
 extension AppThemeContext on BuildContext {
   bool get isDarkMode => Theme.of(this).brightness == Brightness.dark;
 
-  Color get appBackground =>
-      isDarkMode ? AppTheme.darkBg : AppTheme.lightBg;
+  Color get appBackground => isDarkMode ? AppTheme.darkBg : AppTheme.lightBg;
 
-  Color get appPanel =>
-      isDarkMode ? AppTheme.darkPanel : AppTheme.lightPanel;
+  Color get appPanel => isDarkMode ? AppTheme.darkPanel : AppTheme.lightPanel;
 
   Color get appPanelAlt =>
       isDarkMode ? AppTheme.darkPanelAlt : AppTheme.lightPanelAlt;

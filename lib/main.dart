@@ -20,10 +20,13 @@ void main() async {
 
     await AppConfig.init();
 
+    if (Platform.isWindows || Platform.isMacOS) {
+      await WindowManagerHelper().initializeMainWindow();
+    }
+
     if (Platform.isWindows) {
       _initWindowsConsole();
       await _setupSecureContext();
-      await WindowManagerHelper().initializeMainWindow();
     }
 
     await logger.init(minLevel: LogLevel.debug);
