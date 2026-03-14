@@ -1,4 +1,4 @@
-Даваimport '../services/update_service.dart';
+import '../services/update_service.dart';
 
 class UpdateRepository {
   const UpdateRepository();

@@ -163,70 +163,30 @@ ApiRequestDefinition createEmptyApiDocsRequest(
   );
 }
 
-List<(String, String)> buildApiDocsPathInsertionOptions({
-  required String requestPath,
-  required bool hasExistingPlacement,
-}) {
-  final normalizedPath = normalizeApiDocsRequestPath(requestPath);
-  final segments =
-      normalizedPath.split('/').where((item) => item.isNotEmpty).toList();
-  final options = <(String, String)>[];
+String apiDocsPathPlaceholder(String paramName) => '{$paramName}';
 
-  if (hasExistingPlacement) {
-    options.add(('keep', 'Оставить текущее место'));
-  }
-
-  options.add(('prepend', 'В начало пути'));
-  options.add(('append', 'В конец пути'));
-
-  for (var i = 0; i < segments.length; i++) {
-    options.add(('before:$i', 'Перед "${segments[i]}"'));
-    options.add(('after:$i', 'После "${segments[i]}"'));
-  }
-
-  return options;
+bool apiDocsPathContainsPlaceholder(String requestPath, String paramName) {
+  return normalizeApiDocsRequestPath(requestPath)
+      .contains(apiDocsPathPlaceholder(paramName));
 }
 
-String previewApiDocsPathWithInsertion({
+String resolveApiDocsPathPlaceholder({
   required String requestPath,
   required String? oldParamName,
-  required String newPlaceholder,
-  required String insertionMode,
+  required String newParamName,
 }) {
-  final sanitized = oldParamName == null
-      ? normalizeApiDocsRequestPath(requestPath)
-      : removeApiDocsPathPlaceholder(requestPath, oldParamName);
+  final normalizedPath = normalizeApiDocsRequestPath(requestPath);
+  final newPlaceholder = apiDocsPathPlaceholder(newParamName);
 
-  if (insertionMode == 'keep') {
-    if (oldParamName != null && requestPath.contains('{$oldParamName}')) {
+  if (oldParamName != null && oldParamName.isNotEmpty) {
+    final oldPlaceholder = apiDocsPathPlaceholder(oldParamName);
+    if (normalizedPath.contains(oldPlaceholder)) {
       return normalizeApiDocsRequestPath(
-        requestPath.replaceAll('{$oldParamName}', newPlaceholder),
+        normalizedPath.replaceAll(oldPlaceholder, newPlaceholder),
       );
     }
-    return normalizeApiDocsRequestPath(requestPath);
   }
-
-  final segments =
-      sanitized.split('/').where((item) => item.isNotEmpty).toList();
-
-  if (segments.isEmpty) {
-    return '/$newPlaceholder';
-  }
-
-  if (insertionMode == 'prepend') {
-    segments.insert(0, newPlaceholder);
-  } else if (insertionMode == 'append') {
-    segments.add(newPlaceholder);
-  } else if (insertionMode.startsWith('before:')) {
-    final index = int.tryParse(insertionMode.split(':').last) ?? 0;
-    segments.insert(index.clamp(0, segments.length), newPlaceholder);
-  } else if (insertionMode.startsWith('after:')) {
-    final index =
-        int.tryParse(insertionMode.split(':').last) ?? (segments.length - 1);
-    segments.insert((index + 1).clamp(0, segments.length), newPlaceholder);
-  }
-
-  return '/${segments.join('/')}';
+  return normalizedPath;
 }
 
 String removeApiDocsPathPlaceholder(String path, String paramName) {

@@ -136,12 +136,6 @@ class ApiDocsFieldDialogs {
         ? current.type
         : pathFieldTypes.first;
     var isDictionary = current.isDictionary;
-    final existingPlaceholder =
-        current.name.isEmpty ? null : '{${current.name}}';
-    var insertionMode =
-        existingPlaceholder != null && requestPath.contains(existingPlaceholder)
-            ? 'keep'
-            : 'append';
 
     final result = await showDialog<ApiDocsPathParamDialogResult>(
       context: context,
@@ -150,15 +144,14 @@ class ApiDocsFieldDialogs {
           final previewName = nameController.text.trim().isEmpty
               ? 'param'
               : nameController.text.trim();
-          final previewPlaceholder = '{$previewName}';
-          final insertionOptions = buildApiDocsPathInsertionOptions(
+          final resolvedPath = resolveApiDocsPathPlaceholder(
             requestPath: requestPath,
-            hasExistingPlacement: existingPlaceholder != null &&
-                requestPath.contains(existingPlaceholder),
+            oldParamName: initial?.name,
+            newParamName: previewName,
           );
-          if (!insertionOptions.any((option) => option.$1 == insertionMode)) {
-            insertionMode = insertionOptions.first.$1;
-          }
+          final previewPlaceholder = apiDocsPathPlaceholder(previewName);
+          final hasPlaceholder =
+              apiDocsPathContainsPlaceholder(resolvedPath, previewName);
 
           return AlertDialog(
             title: const Text('Path parameter'),
@@ -232,25 +225,53 @@ class ApiDocsFieldDialogs {
                       ),
                     ),
                     const SizedBox(height: ApiDocsDialogLayout.fieldSpacing),
-                    DropdownButtonFormField<String>(
-                      initialValue: insertionMode,
-                      isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Место вставки в URL',
-                        border: OutlineInputBorder(),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: context.appPanelAlt.withValues(alpha: 0.42),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: hasPlaceholder
+                              ? context.appBorder.withValues(alpha: 0.4)
+                              : const Color(0xFFE4A646).withValues(alpha: 0.52),
+                        ),
                       ),
-                      items: insertionOptions
-                          .map(
-                            (option) => DropdownMenuItem<String>(
-                              value: option.$1,
-                              child: Text(option.$2),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Связь с URL',
+                            style: TextStyle(
+                              color: context.appTextMuted,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.3,
                             ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        if (value == null) return;
-                        setState(() => insertionMode = value);
-                      },
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Path параметр должен существовать как плейсхолдер `$previewPlaceholder` в поле path запроса.',
+                            style: TextStyle(
+                              color:
+                                  context.appTextPrimary.withValues(alpha: 0.9),
+                              height: 1.45,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            hasPlaceholder
+                                ? 'Плейсхолдер найден в URL.'
+                                : 'Плейсхолдер пока не найден в URL. Добавь его в path запроса перед сохранением.',
+                            style: TextStyle(
+                              color: hasPlaceholder
+                                  ? const Color(0xFF2FA67A)
+                                  : const Color(0xFFE4A646),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: ApiDocsDialogLayout.fieldSpacing),
                     if (!isDictionary)
@@ -357,12 +378,7 @@ class ApiDocsFieldDialogs {
                           ),
                           const SizedBox(height: 8),
                           SelectableText(
-                            previewApiDocsPathWithInsertion(
-                              requestPath: requestPath,
-                              oldParamName: initial?.name,
-                              newPlaceholder: previewPlaceholder,
-                              insertionMode: insertionMode,
-                            ),
+                            resolvedPath,
                             style: TextStyle(
                               color: context.appTextPrimary,
                               fontSize: 14,
@@ -399,6 +415,17 @@ class ApiDocsFieldDialogs {
                     );
                     return;
                   }
+                  final resolvedSavePath = resolveApiDocsPathPlaceholder(
+                    requestPath: requestPath,
+                    oldParamName: initial?.name,
+                    newParamName: name,
+                  );
+                  if (!apiDocsPathContainsPlaceholder(resolvedSavePath, name)) {
+                    showRequiredFieldMessage(
+                      'Добавьте плейсхолдер ${apiDocsPathPlaceholder(name)} в path запроса',
+                    );
+                    return;
+                  }
 
                   Navigator.of(context).pop(
                     ApiDocsPathParamDialogResult(
@@ -418,12 +445,7 @@ class ApiDocsFieldDialogs {
                             ? List<ApiDictionaryEntry>.from(dictionaryEntries)
                             : const <ApiDictionaryEntry>[],
                       ),
-                      path: previewApiDocsPathWithInsertion(
-                        requestPath: requestPath,
-                        oldParamName: initial?.name,
-                        newPlaceholder: '{$name}',
-                        insertionMode: insertionMode,
-                      ),
+                      path: resolvedSavePath,
                     ),
                   );
                 },
