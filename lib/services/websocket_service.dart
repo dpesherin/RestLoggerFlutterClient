@@ -145,7 +145,10 @@ class WebSocketService {
 
     _socket!.on('connect', (_) {
       suppressErrors(() {
+        _reconnectTimer?.cancel();
+        _reconnectTimer = null;
         _isReconnecting = false;
+        _reconnectAttempts = 0;
         _lastError = null;
         _latencyMs = _connectStopwatch?.elapsedMilliseconds;
         _connectStopwatch?.stop();
@@ -227,6 +230,7 @@ class WebSocketService {
 
     final delay = Duration(seconds: _reconnectAttempts.clamp(1, 3));
     _reconnectTimer = Timer(delay, () {
+      _reconnectTimer = null;
       _openSocket(resetReconnectAttempts: false);
     });
   }

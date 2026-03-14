@@ -360,11 +360,18 @@ class _MainScreenState extends State<MainScreen> {
     await _controller.refreshAuthStatus();
   }
 
+  void _dismissTransientRoutes() {
+    final navigator = Navigator.of(context, rootNavigator: true);
+    navigator.popUntil((route) => route is PageRoute<dynamic>);
+    ModalGuardService.reset();
+  }
+
   void _redirectToLogin() {
     _controller.disconnectWebSocket();
     if (!mounted) return;
 
     _controller.clearMessages();
+    _dismissTransientRoutes();
 
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -397,6 +404,7 @@ class _MainScreenState extends State<MainScreen> {
       if (!mounted) return;
 
       Navigator.pop(context);
+      _dismissTransientRoutes();
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const LoginScreen()),
         (route) => false,
@@ -433,6 +441,7 @@ class _MainScreenState extends State<MainScreen> {
       if (!mounted) return;
 
       Navigator.pop(context);
+      _dismissTransientRoutes();
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const LoginScreen()),
         (route) => false,

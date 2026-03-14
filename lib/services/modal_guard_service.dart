@@ -5,6 +5,10 @@ class ModalGuardService {
 
   static final Map<String, bool> _openState = <String, bool>{};
 
+  static void reset() {
+    _openState.clear();
+  }
+
   static Future<T?> showGuarded<T>(
     BuildContext context,
     String modalType,

@@ -20,8 +20,8 @@ class ConnectionStatusModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final canReconnect = !connectionStatus.isConnected &&
-        connectionStatus.reconnectAttempts < connectionStatus.maxReconnectAttempts;
+    final canReconnect =
+        !connectionStatus.isConnected && !connectionStatus.isReconnecting;
     final handshakeMs = connectionStatus.latencyMs ?? 0;
     final authMs = authStatus.latencyMs;
     final combinedMs = handshakeMs + authMs;
