@@ -26,11 +26,30 @@ flutter pub get
 flutter run -d macos
 ```
 
-Сборка release:
+Сборка release без Developer ID подписи:
 ```bash
-flutter build macos --release
-hdiutil create -volname "LoggerFlutterClient" -srcfolder "build/macos/Build/Products/Release/LoggerFlutterClient.app" -ov -format UDZO "build/LoggerFlutterClient.dmg"
+flutter pub get
+flutter build macos --release --config-only
+xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner -configuration Release -derivedDataPath build/macos_xcode CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= build
+mkdir -p build/dmg-src-1.2.0
+cp -R build/macos_xcode/Build/Products/Release/LoggerFlutterClient.app build/dmg-src-1.2.0/
+ln -s /Applications build/dmg-src-1.2.0/Applications
+hdiutil create -volname "LoggerFlutterClient 1.2.0" -srcfolder build/dmg-src-1.2.0 -ov -format UDZO build/LoggerFlutterClient-macos-1.2.0-unsigned.dmg
 ```
+
+Установка неподписанного приложения на macOS:
+```text
+1. Открыть DMG и перетащить LoggerFlutterClient.app в Applications.
+2. В Finder открыть Applications.
+3. Нажать правой кнопкой по LoggerFlutterClient.app -> Open -> Open.
+```
+
+Если Gatekeeper уже заблокировал запуск, пользователь может:
+```text
+System Settings -> Privacy & Security -> Open Anyway
+```
+
+Для установки без предупреждений Gatekeeper нужен Developer ID сертификат и notarization от Apple. Для неподписанного приложения полностью убрать системные предупреждения для всех пользователей нельзя.
 
 ### Windows
 
@@ -225,4 +244,3 @@ MIT License - смотрите [LICENSE.txt](LICENSE.txt)
 ## Контакты
 
 Для вопросов и предложений создавайте Issues в репозитории.
-
